@@ -7,22 +7,34 @@
 class Connection
 {
 private:
-	SOCKET      theSocket;
-	SOCKET      listenSocket;
+
+	bool autoClose = true;
+
+protected:
+	
+	SOCKET		mySocket;
 	SOCKADDR_IN saServer;
+	
 
 public:
-	//mode listen()
-	Connection(short cPort);
+	
+	Connection();
+	Connection(SOCKET socket);
 
-	//mode connect() 
-	Connection(short cPort, char *szServer);
+	virtual ~Connection();
 
-	~Connection();
+	//int waitRequest();
 
-	int runAsServer();
+	//void connectTo(short cPort, char *szServer);
 
-	int WaitRequest();
+	//void listenOn(short cPort);
+
+	void operator=(Connection& other) {
+		mySocket = other.mySocket;
+		other.autoClose = false;
+	}
+
+	void close();
 
 	int sendFile(std::string FilePath);
 

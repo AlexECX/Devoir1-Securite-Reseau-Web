@@ -1,5 +1,5 @@
 #include "Connection.h"
-#include "Connection_error.h"
+#include "ConnectionException.h"
 #include <sstream>
 #include <string>
 // Helper macro for displaying errors
@@ -7,206 +7,42 @@
 
 using namespace std;
 
-
-Connection::Connection(short cPort)
+Connection::Connection(SOCKET socket)
 {
-	WORD wVersionRequested = MAKEWORD(1, 1);
-	WSADATA wsaData;
-	int nRet;
-	//
-	// Initialize WinSock and check the version
-	//
-	nRet = WSAStartup(wVersionRequested, &wsaData);
-	if (wsaData.wVersion != wVersionRequested) {
-		cout << "Wrong version";
-		return;
+	mySocket = socket;
+	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
+		throw ConnectionException("\nsocket(): Winsock error "
+			+ std::to_string(WSAGetLastError()));
 	}
+}
+
+Connection::Connection()
+{
 	//
-	// Create a TCP/IP stream socket to "listen" with
-	//
-	listenSocket = socket(AF_INET,                 // Address family
+// Create a TCP/IP stream socket to "listen" with
+//
+	mySocket = socket(AF_INET,                 // Address family
 		SOCK_STREAM,          // Socket type
 		IPPROTO_TCP);         // Protocol
-	if (listenSocket == INVALID_SOCKET) {
-		throw Connection_error("socket()");
-		//return;
-	}
 
-	//
-	// Fill in the address structure
-	//
-	saServer.sin_family = AF_INET;
-	saServer.sin_addr.s_addr = INADDR_ANY;   // Indicates that connections can come from any local interface (IP address)
-											 // (by the way,  INADDR_ANY is actually "0x00000000")
-											 // ************ if you wish to specify a specific local interface (IP address) :
-											 //              =>     saServer.sin_addr.s_addr = inet_addr( "127.0.0.1" );
-	saServer.sin_port = htons(cPort);        // Use port from command line
-
-	//
-	// bind the name to the socket
-	//
-	nRet = bind(listenSocket,                      // Socket
-		(LPSOCKADDR)&saServer,       // Our address
-		sizeof(struct sockaddr));    // Size of address structure
-	if (nRet == SOCKET_ERROR) {
-		closesocket(listenSocket);
-		throw Connection_error("bind()");
-	}
-
-	std::cout << "\nlisten()";
-	nRet = listen(listenSocket,                          // Bound socket
-		SOMAXCONN);                            // Number of connection request queue
-	if (nRet == SOCKET_ERROR) {
-		closesocket(listenSocket);
-		throw Connection_error("listen()");
-	}
-
-	//
-	// This isn't normally done or required, but in this
-	// example we're printing out where the server is waiting
-	// so that you can connect the example client.
-	//
-	int nLen;
-	nLen = sizeof(SOCKADDR);
-	char szBuf[1024];
-
-	nRet = gethostname(szBuf, sizeof(szBuf));
-	if (nRet == SOCKET_ERROR) {
-		closesocket(listenSocket);
-		throw Connection_error("gethostname()");
-	}
-
-	//
-	// Show the server name and port number
-	//
-	std::cout << "\nServer named " << szBuf << " waiting on port " << cPort;
-
-
-}
-
-Connection::Connection(short cPort, char *szServer) {
-	WORD wVersionRequested = MAKEWORD(1, 1);
-	WSADATA wsaData;
-	int nRet;
-	//
-	// Initialize WinSock and check the version
-	//
-	nRet = WSAStartup(wVersionRequested, &wsaData);
-	if (wsaData.wVersion != wVersionRequested) {
-		cout << "Wrong version";
-		return;
-	}
-
-	//
-	// Find the server
-	//
-	LPHOSTENT lpHostEntry;
-	hostent *remoteHost;
-
-	/*lpHostEntry = gethostbyname(szServer);
-	if (lpHostEntry == NULL) {
-		throw Connection_error("gethostbyname()");
-	}*/
-
-	//
-	// Create a TCP/IP stream socket to "listen" with
-	//
-	theSocket = socket(AF_INET,                    // Address family
-		SOCK_STREAM,              // Socket type
-		IPPROTO_TCP);        // Protocol
-	if (theSocket == INVALID_SOCKET) {
-		throw Connection_error("socket()");
-	}
-
-	//
-	// Fill in the address structure
-	//
-	/*lpHostEntry.s_addr = inet_addr(szServer);
-	if (lpHostEntry.s_addr == INADDR_NONE) {
-		printf("The IPv4 address entered must be a legal address\n");
-		return;
-	}
-	else
-		remoteHost = gethostbyaddr((char *)&lpHostEntry, 4, AF_INET);*/
-
-	saServer.sin_family = AF_INET;
-	saServer.sin_addr.s_addr = inet_addr(szServer);
-	if (saServer.sin_addr.s_addr == INADDR_NONE) {
-		cout << endl << szServer << " is not IPv4, hostname?";
-		lpHostEntry = gethostbyname(szServer);
-		if (lpHostEntry == NULL) {
-			throw Connection_error(string(szServer) + " invalid parameter");
-		}
-		else {
-			saServer.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
-		}
-	}
-	saServer.sin_port = htons(cPort);
-
-	nRet = connect(theSocket,                      // Socket
-		(LPSOCKADDR)&saServer,       // Our address
-		sizeof(struct sockaddr));    // Size of address structure
-	if (nRet == SOCKET_ERROR) {
-		closesocket(theSocket);
-		throw Connection_error("connect()");
+	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
+		throw ConnectionException("\nsocket(): Winsock error "
+			+ std::to_string(WSAGetLastError()));
 	}
 }
+
 
 Connection::~Connection()
 {
-	closesocket(listenSocket);
-	closesocket(theSocket);
-	WSACleanup();
-}
-
-int Connection::WaitRequest() {
-	//
-	// Wait for an incoming request
-	//
-
-	std::cout << "\nBlocking at accept()";
-	theSocket = accept(listenSocket,            // Listening socket
-		NULL,                            // Optional client address
-		NULL);
-	if (theSocket == INVALID_SOCKET) {
-		closesocket(theSocket);
-		throw Connection_error("accept()");
+	if (autoClose) {
+		closesocket(mySocket);
 	}
-	else
-		std::cout << "\nConnected with client" << endl;;
-
-	return 0;
 }
 
-int Connection::runAsServer()
+
+void Connection::close()
 {
-	//
-	// We're connected to a client
-	// New socket descriptor returned already
-	// has clients address
-
-	//
-	// Receive data from the client
-	//
-	char* recvBuffer = nullptr;
-	unsigned int BufferSize;
-
-	recvFileRequest(recvBuffer, BufferSize);
-
-	std::string FileName{ recvBuffer, BufferSize };
-	delete[] recvBuffer;
-	recvBuffer = nullptr;
-	//
-	// Display received data 
-	//
-	std::cout << "\nData received: " << FileName << std::endl;
-
-	//
-	// Send data back to the client
-	//
-	sendFile(FileName.c_str());		
-
-	return 0;
+	closesocket(mySocket);
 }
 
 int Connection::sendFile(string FilePath) {
@@ -219,13 +55,11 @@ int Connection::sendFile(string FilePath) {
 		offset = 0;
 		File_size = 0;
 		while (offset < sizeof(unsigned int)) {
-			nRet = send(theSocket, (char*)&File_size + offset, 
+			nRet = send(mySocket, (char*)&File_size + offset, 
 						sizeof(unsigned int), 0);
 			if (nRet == SOCKET_ERROR) {
-				int ws_error = WSAGetLastError();
-				closesocket(theSocket);
-				throw Connection_error("\nsendFile() 01: Winsock error "
-					+ std::to_string(ws_error));
+				throw ConnectionException("\nsendFile() 01: Winsock error "
+					+ std::to_string(WSAGetLastError()));
 			}
 			else {
 				offset += nRet;
@@ -242,13 +76,11 @@ int Connection::sendFile(string FilePath) {
 
 		offset = 0;
 		while (offset < sizeof(unsigned int)) {
-			nRet = send(theSocket, (char*)&File_size + offset,
+			nRet = send(mySocket, (char*)&File_size + offset,
 						sizeof(unsigned int) - offset, 0);
 			if (nRet == SOCKET_ERROR) {
-				int ws_error = WSAGetLastError();
-				closesocket(theSocket);
-				throw Connection_error("\nIn sendFile() 02: Winsock error "
-					+ std::to_string(ws_error));
+				throw ConnectionException("\nIn sendFile() 02: Winsock error "
+					+ std::to_string(WSAGetLastError()));
 			}
 			else {
 				offset += nRet;
@@ -309,13 +141,11 @@ int Connection::recvFile(std::string FilePath) {
 
 	unsigned int offset = 0;
 	while (offset < sizeof(unsigned int)) {
-		nRet = recv(theSocket, (char*)&File_size + offset,
+		nRet = recv(mySocket, (char*)&File_size + offset,
 					sizeof(unsigned int) - offset, 0);
 		if (nRet == INVALID_SOCKET) {
-			int ws_error = WSAGetLastError();
-			closesocket(theSocket);
-			throw Connection_error("\nIn recvMessage(): Winsock error "
-				+ std::to_string(ws_error));
+			throw ConnectionException("\nIn recvMessage(): Winsock error "
+				+ std::to_string(WSAGetLastError()));
 		}
 		else if (File_size == 0) {
 			cout << "\nfailed to fetch " << FilePath;
@@ -382,13 +212,11 @@ bool Connection::sendMessage(string file) {
 	unsigned int offset = 0;
 
 	while (offset < sizeof(unsigned int)) {
-		nRet = send(theSocket, (char*)&file_size + offset, 
+		nRet = send(mySocket, (char*)&file_size + offset, 
 					sizeof(unsigned int) - offset, 0);
 		if (nRet == SOCKET_ERROR) {
-			int ws_error = WSAGetLastError();
-			closesocket(theSocket);
-			throw Connection_error("\nIn sendMessage() 01: Winsock error "
-				+ std::to_string(ws_error));
+			throw ConnectionException("\nIn sendMessage() 01: Winsock error "
+				+ std::to_string(WSAGetLastError()));
 		}
 		else {
 			offset += nRet;
@@ -410,12 +238,10 @@ bool Connection::sendMessage(string file) {
 
 		offset = 0;
 		while (offset < Msg_size) {
-			nRet = send(theSocket, send_file + SentBytes + offset, Msg_size - offset, 0);
+			nRet = send(mySocket, send_file + SentBytes + offset, Msg_size - offset, 0);
 			if (nRet == SOCKET_ERROR) {
-				int ws_error = WSAGetLastError();
-				closesocket(theSocket);
-				throw Connection_error("\nIn sendMessage() 02: Winsock error "
-					+ std::to_string(ws_error));
+				throw ConnectionException("\nIn sendMessage() 02: Winsock error "
+					+ std::to_string(WSAGetLastError()));
 			}
 			else {
 				offset += nRet;
@@ -437,13 +263,11 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 	char* reception;
 
 	while (offset < sizeof(unsigned int)) {
-		nRet = recv(theSocket, (char*)&Msg_size + offset,                                        
+		nRet = recv(mySocket, (char*)&Msg_size + offset,                                        
 					sizeof(unsigned int) - offset, 0);                                           
 		if (nRet == INVALID_SOCKET) {
-			int ws_error = WSAGetLastError();
-			closesocket(theSocket);
-			throw Connection_error("\nIn recvMessage(): Winsock error "
-				+ std::to_string(ws_error));
+			throw ConnectionException("\nIn recvMessage(): Winsock error "
+				+ std::to_string(WSAGetLastError()));
 		}
 		else {
 			offset += nRet;
@@ -463,7 +287,7 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 		reception = new char[file_size]; //std::bad_alloc exception here
 	}
 	catch (std::bad_alloc ex) {
-		int p = 0;
+		cout << ex.what();
 	}
 	
 	unsigned int ReceivedBytes = 0;
@@ -481,13 +305,11 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 		// Receive bytes and append to currently downloading file
 		offset = 0;
 		while (offset < Msg_size) {
-			nRet = recv(theSocket, reception + ReceivedBytes + offset,
+			nRet = recv(mySocket, reception + ReceivedBytes + offset,
 						Msg_size - offset, 0);
 			if (nRet == INVALID_SOCKET) {
-				int ws_error = WSAGetLastError();
-				closesocket(theSocket);
-				throw Connection_error("\nIn recvMessage(): Winsock error "
-					+ std::to_string(ws_error));
+				throw ConnectionException("\nIn recvMessage(): Winsock error "
+					+ std::to_string(WSAGetLastError()));
 			}
 			else {
 				offset += nRet;
@@ -504,26 +326,22 @@ bool Connection::sendFileRequest(string file_name) {
 	unsigned int Msg_size = file_name.length();
 
 	int Recpt;
-	Recpt = send(theSocket,                   // Connected socket
+	Recpt = send(mySocket,                   // Connected socket
 		(char*)&Msg_size,                             // Data buffer
 		sizeof(unsigned int),               // Buffer length
 		0);                                // Flags
 	if (Recpt == SOCKET_ERROR) {
-		int ws_error = WSAGetLastError();
-		closesocket(theSocket);
-		throw Connection_error("\nIn sendFileRequest() 01: Winsock error "
-			+ std::to_string(ws_error));
+		throw ConnectionException("\nIn sendFileRequest() 01: Winsock error "
+			+ std::to_string(WSAGetLastError()));
 	}
 
-	Recpt = send(theSocket,                   // Connected socket
+	Recpt = send(mySocket,                   // Connected socket
 		file_name.c_str(),                             // Data buffer
 		Msg_size,               // Buffer length
 		0);                                // Flags
 	if (Recpt == SOCKET_ERROR) {
-		int ws_error = WSAGetLastError();
-		closesocket(theSocket);
-		throw Connection_error("\nIn sendFileRequest() 02: Winsock error "
-			+ std::to_string(ws_error));
+		throw ConnectionException("\nIn sendFileRequest() 02: Winsock error "
+			+ std::to_string(WSAGetLastError()));
 	}
 	return true;
 }
@@ -532,16 +350,14 @@ bool Connection::recvFileRequest(char* &buffer, unsigned int &buffer_size) {
 	unsigned int Msg_size;
 	int Recpt;
 
-	Recpt = recv(theSocket,                            // Connected client
+	Recpt = recv(mySocket,                            // Connected client
 		(char*)&Msg_size,                                         // Receive buffer
 		sizeof(unsigned int),                           // Buffer length
 		0);                                            // Flags
 
 	if (Recpt == INVALID_SOCKET) {
-		int ws_error = WSAGetLastError();
-		closesocket(theSocket);
-		throw Connection_error("\nIn recvFileRequest() 01: Winsock error "
-			+ std::to_string(ws_error));
+		throw ConnectionException("\nIn recvFileRequest() 01: Winsock error "
+			+ std::to_string(WSAGetLastError()));
 	}
 
 	buffer_size = Msg_size;
@@ -549,15 +365,13 @@ bool Connection::recvFileRequest(char* &buffer, unsigned int &buffer_size) {
 
 
 	//memset(szBuf, 0, sizeof(szBuf));
-	Recpt = recv(theSocket,                            // Connected client
+	Recpt = recv(mySocket,                            // Connected client
 		buffer,                                         // Receive buffer
 		buffer_size,                           // Buffer length
 		0);                                            // Flags
 	if (Recpt == INVALID_SOCKET) {
-		int ws_error = WSAGetLastError();
-		closesocket(theSocket);
-		throw Connection_error("\nIn recvFileRequest() 02: Winsock error "
-			+ std::to_string(ws_error));
+		throw ConnectionException("\nIn recvFileRequest() 02: Winsock error "
+			+ std::to_string(WSAGetLastError()));
 	}
 
 	return true;
