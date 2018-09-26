@@ -4,6 +4,8 @@
 #include <fstream>
 #include <string>
 
+#define WSA_ERROR "Winsock error "+std::to_string(WSAGetLastError())
+
 class Connection
 {
 private:

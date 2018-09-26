@@ -66,7 +66,7 @@ void runClient(short nPort, char * host)
 			}
 			catch (const ConnectionException e)
 			{
-				cout << "\ncould not connect";
+				cout << endl << e.what();
 				this_thread::sleep_for(5s);
 			}
 
@@ -79,7 +79,7 @@ void runClient(short nPort, char * host)
 	}
 	catch (const ConnectionException e)
 	{
-		cout << e.what();
+		cout << endl << e.what();
 	}
 	
 

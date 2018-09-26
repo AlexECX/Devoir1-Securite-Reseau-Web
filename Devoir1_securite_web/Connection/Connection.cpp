@@ -5,14 +5,14 @@
 // Helper macro for displaying errors
 #define PRINTERROR(s)	std::cout<<"\n"<<s<<":"<<WSAGetLastError()
 
+
 using namespace std;
 
 Connection::Connection(SOCKET socket)
 {
 	mySocket = socket;
 	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
-		throw ConnectionException("\nsocket(): Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 }
 
@@ -26,8 +26,7 @@ Connection::Connection()
 		IPPROTO_TCP);         // Protocol
 
 	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
-		throw ConnectionException("\nsocket(): Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 }
 
@@ -58,8 +57,7 @@ int Connection::sendFile(string FilePath) {
 			nRet = send(mySocket, (char*)&File_size + offset, 
 						sizeof(unsigned int), 0);
 			if (nRet == SOCKET_ERROR) {
-				throw ConnectionException("\nsendFile() 01: Winsock error "
-					+ std::to_string(WSAGetLastError()));
+				throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 			}
 			else {
 				offset += nRet;
@@ -79,8 +77,7 @@ int Connection::sendFile(string FilePath) {
 			nRet = send(mySocket, (char*)&File_size + offset,
 						sizeof(unsigned int) - offset, 0);
 			if (nRet == SOCKET_ERROR) {
-				throw ConnectionException("\nIn sendFile() 02: Winsock error "
-					+ std::to_string(WSAGetLastError()));
+				throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 			}
 			else {
 				offset += nRet;
@@ -144,8 +141,7 @@ int Connection::recvFile(std::string FilePath) {
 		nRet = recv(mySocket, (char*)&File_size + offset,
 					sizeof(unsigned int) - offset, 0);
 		if (nRet == INVALID_SOCKET) {
-			throw ConnectionException("\nIn recvMessage(): Winsock error "
-				+ std::to_string(WSAGetLastError()));
+			throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 		}
 		else if (File_size == 0) {
 			cout << "\nfailed to fetch " << FilePath;
@@ -215,8 +211,7 @@ bool Connection::sendMessage(string file) {
 		nRet = send(mySocket, (char*)&file_size + offset, 
 					sizeof(unsigned int) - offset, 0);
 		if (nRet == SOCKET_ERROR) {
-			throw ConnectionException("\nIn sendMessage() 01: Winsock error "
-				+ std::to_string(WSAGetLastError()));
+			throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 		}
 		else {
 			offset += nRet;
@@ -240,8 +235,7 @@ bool Connection::sendMessage(string file) {
 		while (offset < Msg_size) {
 			nRet = send(mySocket, send_file + SentBytes + offset, Msg_size - offset, 0);
 			if (nRet == SOCKET_ERROR) {
-				throw ConnectionException("\nIn sendMessage() 02: Winsock error "
-					+ std::to_string(WSAGetLastError()));
+				throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 			}
 			else {
 				offset += nRet;
@@ -266,8 +260,7 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 		nRet = recv(mySocket, (char*)&Msg_size + offset,                                        
 					sizeof(unsigned int) - offset, 0);                                           
 		if (nRet == INVALID_SOCKET) {
-			throw ConnectionException("\nIn recvMessage(): Winsock error "
-				+ std::to_string(WSAGetLastError()));
+			throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 		}
 		else {
 			offset += nRet;
@@ -308,8 +301,7 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 			nRet = recv(mySocket, reception + ReceivedBytes + offset,
 						Msg_size - offset, 0);
 			if (nRet == INVALID_SOCKET) {
-				throw ConnectionException("\nIn recvMessage(): Winsock error "
-					+ std::to_string(WSAGetLastError()));
+				throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 			}
 			else {
 				offset += nRet;
@@ -331,8 +323,7 @@ bool Connection::sendFileRequest(string file_name) {
 		sizeof(unsigned int),               // Buffer length
 		0);                                // Flags
 	if (Recpt == SOCKET_ERROR) {
-		throw ConnectionException("\nIn sendFileRequest() 01: Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 
 	Recpt = send(mySocket,                   // Connected socket
@@ -340,8 +331,7 @@ bool Connection::sendFileRequest(string file_name) {
 		Msg_size,               // Buffer length
 		0);                                // Flags
 	if (Recpt == SOCKET_ERROR) {
-		throw ConnectionException("\nIn sendFileRequest() 02: Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 	return true;
 }
@@ -356,8 +346,7 @@ bool Connection::recvFileRequest(char* &buffer, unsigned int &buffer_size) {
 		0);                                            // Flags
 
 	if (Recpt == INVALID_SOCKET) {
-		throw ConnectionException("\nIn recvFileRequest() 01: Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 
 	buffer_size = Msg_size;
@@ -370,8 +359,7 @@ bool Connection::recvFileRequest(char* &buffer, unsigned int &buffer_size) {
 		buffer_size,                           // Buffer length
 		0);                                            // Flags
 	if (Recpt == INVALID_SOCKET) {
-		throw ConnectionException("\nIn recvFileRequest() 02: Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 
 	return true;

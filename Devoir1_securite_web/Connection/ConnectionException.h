@@ -1,15 +1,19 @@
 #pragma once
 #include <exception>
+#include <stdexcept>
 #include <string>
+#include <sstream>
 
-class ConnectionException :
-	public std::exception
+class ConnectionException : public std::runtime_error
 {
 private:
-	std::string error_Msg;
+	std::string stream_Msg;
+
 public:
-	ConnectionException(const std::string& message);
+	ConnectionException(const std::string& msg, const char *file, int line);
+			
 	virtual char const* what() const throw();
-	~ConnectionException();
+
+	~ConnectionException() throw();
 };
 

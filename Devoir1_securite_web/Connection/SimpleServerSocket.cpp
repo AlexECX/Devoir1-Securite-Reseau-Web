@@ -45,15 +45,13 @@ void SimpleServerSocket::bindSocket(char * szServer, short cPort)
 		(LPSOCKADDR)&saServer,       // Our address
 		sizeof(struct sockaddr));    // Size of address structure
 	if (nRet == SOCKET_ERROR) {
-		throw ConnectionException("\nbind(): Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 
 	nRet = listen(mySocket,                          // Bound socket
 		SOMAXCONN);                            // Number of connection request queue
 	if (nRet == SOCKET_ERROR) {
-		throw ConnectionException("\nlisten(): Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 }
 
@@ -68,8 +66,7 @@ SimpleSocket SimpleServerSocket::acceptSocket()
 		NULL,                            // Optional client address
 		NULL);
 	if (listenSocket == INVALID_SOCKET) {
-		throw ConnectionException("\naccept(): Winsock error "
-			+ std::to_string(WSAGetLastError()));
+		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
 	}
 	else
 		std::cout << "\nConnected";

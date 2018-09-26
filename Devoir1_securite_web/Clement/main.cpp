@@ -61,7 +61,7 @@ void runServer(short nPort)
 	}
 	catch (const ConnectionException e)
 	{
-		cout << e.what();
+		cout << endl << e.what();
 	}
 	
 	
