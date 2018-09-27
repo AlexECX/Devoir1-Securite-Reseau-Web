@@ -46,7 +46,6 @@ int main(int argc, char **argv)
 void runServer(short nPort)
 {
 	string msg = "";
-	string msg_copy = "";
 	try
 	{
 		SimpleServerSocket server = SimpleServerSocket(nPort);

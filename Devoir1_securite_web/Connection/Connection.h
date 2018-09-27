@@ -25,12 +25,6 @@ public:
 
 	virtual ~Connection();
 
-	//int waitRequest();
-
-	//void connectTo(short cPort, char *szServer);
-
-	//void listenOn(short cPort);
-
 	void operator=(Connection& other) {
 		mySocket = other.mySocket;
 		other.autoClose = false;
@@ -38,6 +32,7 @@ public:
 
 	void close();
 
+	//
 	int sendFile(std::string FilePath);
 
 	int recvFile(std::string FilePath);

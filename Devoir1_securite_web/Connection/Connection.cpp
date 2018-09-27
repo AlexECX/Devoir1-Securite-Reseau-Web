@@ -51,6 +51,7 @@ int Connection::sendFile(string FilePath) {
 
 	std::ifstream File_source(FilePath.c_str(), std::ios::binary);
 	if (File_source.fail()) {
+		//Send 0 to client, to tell no file was found
 		offset = 0;
 		File_size = 0;
 		while (offset < sizeof(unsigned int)) {
