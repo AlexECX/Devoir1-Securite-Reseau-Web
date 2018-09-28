@@ -52,11 +52,33 @@ void runServer(short nPort)
 		SimpleSocket s1 = server.acceptSocket();
 		SimpleSocket s2 = server.acceptSocket();
 
+		string bob_key = "1234";
+		string agnesse_key = "abcd";
+
 		s1.recvMessage(msg);
-		s2.sendMessage(msg);
+		if (verifyMAC(msg, agnesse_key)) {
+			msg = extractMsg(msg);
+			s2.sendMessage(msg + simpleHMCA(msg, bob_key));
+		}
+		else
+		{
+			msg = "MAC error from Clement";
+			s1.sendMessage(msg + simpleHMCA(msg, agnesse_key));
+			msg = "Agnesse MAC was refused";
+			s2.sendMessage(msg + simpleHMCA(msg, bob_key));
+		}
 
 		s2.recvMessage(msg);
-		s1.sendMessage(msg);
+		if (verifyMAC(msg, bob_key)) {
+			msg = extractMsg(msg);
+			s1.sendMessage(msg + simpleHMCA(msg, agnesse_key));
+		}
+		else
+		{
+			msg = "Bob MAC was refused";
+			s1.sendMessage(msg + simpleHMCA(msg, agnesse_key));
+		}		
+		
 	}
 	catch (const ConnectionException e)
 	{

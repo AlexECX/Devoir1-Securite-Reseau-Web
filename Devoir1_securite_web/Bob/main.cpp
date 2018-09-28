@@ -14,6 +14,7 @@ using namespace std;
 //#define PORT 2030
 
 void runClient(short nPort, char* host);
+void scriptedConvo(SimpleSocket client, string& msg);
 
 int main(int argc, char **argv)
 {
@@ -71,11 +72,8 @@ void runClient(short nPort, char * host)
 			}
 
 		}
-		cout << "\nwaiting for Agnesse on port " << to_string(nPort);
-		client.recvMessage(msg);
-		cout << "\nreceived \"" << msg << "\"";
-		cout << "\nsending \"Hello\" to Agnesse";
-		client.sendMessage("Hello from Bob");
+		
+		scriptedConvo(client, msg);
 	}
 	catch (const ConnectionException e)
 	{
@@ -83,4 +81,30 @@ void runClient(short nPort, char * host)
 	}
 	
 
+}
+
+void scriptedConvo(SimpleSocket client, string& msg) {
+	string bob_key = "1234";
+
+
+	cout << "\nwaiting for Agnesse";
+	client.recvMessage(msg);
+	cout << "\nreceived \"" << extractMsg(msg) << "\"";
+
+	bool mac_result = verifyMAC(msg, bob_key);
+	cout << "\nthe verifyMAC result is: " << (mac_result == true ? "True" : "False");
+
+	if (mac_result == true) {
+		cout << "\nsending \"Hello\" to Agnesse";
+		msg = "Hello from Bob";
+		string mac = simpleHMCA(msg, bob_key);
+		cout << "\n The MAC is " << mac;
+		client.sendMessage(msg + mac);
+	}
+	else
+	{
+		cout << "\nsending MAC error";
+		msg = "MAC error from Bob";
+		client.sendMessage(msg + simpleHMCA(msg, bob_key));
+	}
 }
