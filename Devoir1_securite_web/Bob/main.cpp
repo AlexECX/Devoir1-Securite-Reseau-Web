@@ -6,6 +6,8 @@
 #include "ConnectionException.h"
 #include "Utils.h"
 #include "SimpleSocket.h"
+#include <map>
+#include <bitset>
 
 using namespace std;
 
@@ -52,7 +54,20 @@ int main(int argc, char **argv)
 
 void runClient(short nPort, char * host)
 {
-	try
+	string message = "HelloFrom\nTheOtherSideHelloFrom\nééééTheOther\n  .Side$";
+	cout << endl << message;
+	message = encrypt(message);
+	cout << endl <<  message;
+
+	message = encrypt(message);
+	cout << endl << message;
+
+
+	
+	
+
+
+	/*try
 	{
 		string msg = "";
 		bool connected = false;
@@ -79,7 +94,7 @@ void runClient(short nPort, char * host)
 	{
 		cout << endl << e.what();
 	}
-	
+	*/
 
 }
 

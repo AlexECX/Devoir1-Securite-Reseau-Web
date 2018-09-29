@@ -30,6 +30,9 @@
     <ClInclude Include="..\Connection\SimpleSocket.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Connection\base64.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Connection\Utils.cpp">
@@ -48,6 +51,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Connection\ConnectionException.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Connection\base64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
