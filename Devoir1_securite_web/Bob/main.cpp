@@ -94,42 +94,37 @@ void runClient(short nPort, const char * host)
 
 void scriptedConvo(SimpleSocket client, string& transit) {
 	string bob_key = "1234";
-	string message;
+	string message = "";
+	string mac = "";
 
+	/**/
 	cout << "\nwaiting for Agnesse";
 	client.recvMessage(transit);
-	cout << "\nreceived \"" << transit << "\"";
-	transit = "Hello from Bob";
-	cout << "\nsending \"" << transit << "\" to Agnesse";
-	client.sendMessage(transit);
-
-
-	/**
-	cout << "\nwaiting for Agnesse";
-	client.recvMessage(transit);
-	message = extractMsg(transit);
-	cout << "\nreceived \"" << message << "\"";
-	cout << "\nreceived \"" << decrypt(message, bob_key) << "\"";
-
+	cout << "\nreceived \"\n";
+	cout << transit << "\"";
 	bool mac_result = verifyMAC(transit, bob_key);
-	cout << "\nthe verifyMAC result is: " << (mac_result == true ? "True" : "False");
+	cout << "\nthe verifyMAC result is: "
+		<< (mac_result == true ? "True" : "False");
+
+	message = decrypt(extractMsg(transit), bob_key);
+	cout << "\nreceived \"" << message << "\"";
 
 	if (mac_result == true) {
-		transit = "Hello from Bob";
-		cout << "\nsending \"" << transit << "\" to Agnesse";
-		transit = encrypt(transit, bob_key);
-		cout << "\nsending \"" << transit << "\" to Agnesse";
+		message = "Hello from Bob";
+		cout << "\nsending \"" << message << "\" to Agnesse";
+		message = encrypt(message, bob_key);
+		cout << "\nsending \"" << message << "\" to Agnesse";
 		
-		string mac = getMac(transit, bob_key);
-		cout << "\n The MAC is " << mac;
-		client.sendMessage(transit + mac);
+		mac = generateMac(message, bob_key);
+		cout << "\nthe MAC is " << mac;
+		client.sendMessage(message + mac);
 	}
 	else
 	{
 		message = "MAC error from Bob";
 		cout << "\nsending \"" << message << "\"";
-		transit = encrypt(message, bob_key);
-		client.sendMessage(transit + getMac(message, bob_key));
+		message = encrypt(message, bob_key);
+		client.sendMessage(message + generateMac(message, bob_key));
 	}
 	/**/
 }

@@ -23,6 +23,8 @@ std::string simpleHMCA(const std::string& message, const std::string& key);
 
 std::string extractMsg(const std::string&);
 
-std::string getMac(const std::string& message, const std::string& key);
+std::string extractMac(const std::string&);
+
+std::string generateMac(const std::string& message, const std::string& key);
 
 bool verifyMAC(const std::string&, const std::string&);

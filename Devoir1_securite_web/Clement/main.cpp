@@ -46,8 +46,11 @@ int main(int argc, char **argv)
 void runServer(short nPort)
 {
 	string transit = "";
+	string msg_brut = "";
 	string message = "";
-	string cryptogram = "";
+	string mac = "";
+
+
 	try
 	{
 		SimpleServerSocket server = SimpleServerSocket(nPort);
@@ -57,38 +60,30 @@ void runServer(short nPort)
 		string bob_key = "1234";
 		string agnesse_key = "abcd";
 
+		/**/
 		s1.recvMessage(transit);
-		s2.sendMessage(transit);
 
-		s2.recvMessage(transit);
-		s1.sendMessage(transit);
-
-		/**
-		s1.recvMessage(transit);
 		if (verifyMAC(transit, agnesse_key)) {
-			message = extractMsg(transit);
-			cryptogram = encrypt(decrypt(message, agnesse_key), bob_key);
-			s2.sendMessage(cryptogram + getMac(transit, bob_key));
+			message = encrypt(decrypt(extractMsg(transit), agnesse_key), bob_key);
+			s2.sendMessage(message + generateMac(message, bob_key));
 		}
 		else
 		{
-			cryptogram = encrypt("MAC error from Clement", agnesse_key);
-			s1.sendMessage(cryptogram + getMac(transit, agnesse_key));
-			cryptogram = encrypt("Agnesse MAC was refused", bob_key);
-			s2.sendMessage(cryptogram + getMac(transit, bob_key));
+			message = encrypt("MAC error from Clement", agnesse_key);
+			s1.sendMessage(message + generateMac(message, agnesse_key));
+			message = encrypt("Agnesse MAC was refused", bob_key);
+			s2.sendMessage(message + generateMac(message, bob_key));
 		}
 
 		s2.recvMessage(transit);
 		if (verifyMAC(transit, bob_key)) {
-			transit = extractMsg(transit);
-			cryptogram = encrypt(decrypt(transit, bob_key), agnesse_key);
-			s1.sendMessage(cryptogram + getMac(transit, agnesse_key));
+			message = encrypt(decrypt(extractMsg(transit), bob_key), agnesse_key);
+			s1.sendMessage(message + generateMac(message, agnesse_key));
 		}
 		else
 		{
-			transit = "Bob MAC was refused";
-			cryptogram = encrypt(transit, bob_key);
-			s1.sendMessage(cryptogram + getMac(transit, agnesse_key));
+			message = encrypt("Bob MAC was refused", agnesse_key);
+			s1.sendMessage(message + generateMac(message, agnesse_key));
 		}		
 		/**/
 		

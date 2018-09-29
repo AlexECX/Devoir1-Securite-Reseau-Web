@@ -61,7 +61,7 @@ string encrypt(const string& message, const string& key) {
 }
 
 string decrypt(const string& message, const string& key) {
-	return reseauFeistel(message, key, encryptionAlgo, 10);
+	return string(reseauFeistel(message, key, encryptionAlgo, 10).c_str());
 }
 
 string reseauFeistel(
@@ -227,10 +227,14 @@ string simpleHash(const string& message) {
 }
 
 string extractMsg(const string& str) {
-	return string(str, 0, str.length() - BLOCK_SIZE);
+	return str.substr(0, str.length() - BLOCK_SIZE);
 }
 
-string getMac(const string& message, const string& key) {
+string extractMac(const string& str) {
+	return str.substr(str.length() - BLOCK_SIZE, BLOCK_SIZE);
+}
+
+string generateMac(const string& message, const string& key) {
 	return simpleHMCA(message, key);
 }
 
@@ -238,7 +242,7 @@ bool verifyMAC(const string& str, const string& key) {
 	string the_msg = str.substr(0, str.length() - BLOCK_SIZE);
 	string the_MAC = str.substr(str.length() - BLOCK_SIZE, BLOCK_SIZE);
 
-	return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
+	return  the_MAC.compare(generateMac(the_msg, key)) == 0;
 }
 
 //Internet code start
