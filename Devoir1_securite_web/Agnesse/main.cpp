@@ -10,16 +10,16 @@
 using namespace std;
 
 //#define HARD_CODED
-//#define HOST "P2-4020-21" //Can be Name or IP address
-//#define PORT 2030
+#define HOST "127.0.0.1" //Can be Name or IP address
+#define PORT 8812
 
-void runClient(short nPort, char* host);
+void runClient(short nPort, const char* host);
 void scriptedConvo(SimpleSocket client, string& msg);
 
 int main(int argc, char **argv)
 {
 	short nPort;
-	char* host;
+	const char* host;
 
 	//
 	// Check for the host and port arguments
@@ -50,7 +50,7 @@ int main(int argc, char **argv)
 
 }
 
-void runClient(short nPort, char * host)
+void runClient(short nPort, const char * host)
 {
 	
 	try
@@ -90,14 +90,18 @@ void scriptedConvo(SimpleSocket client, string& msg) {
 
 	msg = "Hello from Agnesse";
 	cout << "\nsending \"" << msg << "\" to Bob";
-	string mac = simpleHMCA(msg, agnesse_key);
+	msg = encrypt(msg, agnesse_key);
+	cout << "\nsending \"" << msg << "\" to Bob";
+	string mac = getMac(msg, agnesse_key);
 	cout << "\n The MAC is " << mac;
 
 	client.sendMessage(msg + mac);
 	cout << "\nwaiting for Bob";
 	client.recvMessage(msg);
-
-	cout << "\nreceived \"" << extractMsg(msg) << "\"";
+	msg = extractMsg(msg);
+	cout << "\nreceived \"" << msg << "\"";
+	msg = decrypt(msg, agnesse_key);
+	cout << "\nreceived \"" << msg << "\"";
 	cout << "\nthe verifyMAC result is: " << ((verifyMAC(msg, agnesse_key) == true) ? "True" : "False");
 
 }

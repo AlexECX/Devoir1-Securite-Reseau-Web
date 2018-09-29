@@ -21,7 +21,7 @@ SimpleServerSocket::~SimpleServerSocket()
 {
 }
 
-void SimpleServerSocket::bindSocket(char * szServer, short cPort)
+void SimpleServerSocket::bindSocket(const char * szServer, short cPort)
 {
 	saServer.sin_family = AF_INET;
 	if (szServer != nullptr) {

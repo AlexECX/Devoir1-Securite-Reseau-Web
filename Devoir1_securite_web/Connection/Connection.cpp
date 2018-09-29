@@ -8,7 +8,7 @@
 
 using namespace std;
 
-Connection::Connection(SOCKET socket)
+Connection::Connection(const SOCKET socket)
 {
 	mySocket = socket;
 	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {

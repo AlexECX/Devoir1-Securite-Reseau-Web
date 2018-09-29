@@ -25,7 +25,7 @@ void initWSA(){
 
 void rotate_l(unsigned char *object, size_t size);
 void rotate_r(unsigned char *object, size_t size);
-string useSBox(const unsigned char* uc_msg, unsigned int len);
+string useSBox(const string& uc_msg, unsigned int len);
 
 #define CRYPTO_BLOCK 8	//octets (ou chars)
 #define BLOCK_SIZE 128	//octets (ou chars)
@@ -56,36 +56,47 @@ map<char, unsigned int> Sbox = {
 		{'=', 0x00},
 };
 
-string encrypt(string message) {
-	return reseauFeistel(message, encryptionAlgo, 5);
+string encrypt(const string& message, const string& key) {
+	return reseauFeistel(message, key, encryptionAlgo, 10);
 }
 
-string encryptionAlgo(const unsigned char* message, unsigned lenght) {
-	return useSBox(message, lenght);
-	//return string(reinterpret_cast<const char*>(message), lenght);
+string decrypt(const string& message, const string& key) {
+	return reseauFeistel(message, key, encryptionAlgo, 10);
 }
 
 string reseauFeistel(
-	string message, 				 
-	string (*cryptAlgo)(const unsigned char*, unsigned),
+	const string& message, 	
+	const string& key,
+	string (*cryptAlgo)(const unsigned char*, const unsigned char*, unsigned),
 	unsigned turn_count
 ) {
 	unsigned char blockInput[CRYPTO_BLOCK * 2];
 	unsigned char blockL[CRYPTO_BLOCK];
 	unsigned char blockR[CRYPTO_BLOCK];
+	string cryptogram;
+
 	const unsigned char* raw_message;
 	raw_message = reinterpret_cast<const unsigned char*>(message.c_str());
-	unsigned int len = message.length();
-	string result;	
+	//pour s'assurer que la taille de la clé == taille d'un bloque,
+	//la tronque si tros grosse, la complete avec des 0 si tros petite.
+	unsigned char raw_key[CRYPTO_BLOCK];
+	memset(raw_key, 0, CRYPTO_BLOCK);
+	if (key.length() > CRYPTO_BLOCK) {
+		memcpy(raw_key, key.c_str(), CRYPTO_BLOCK);
+	}
+	else
+	{
+		memcpy(raw_key, key.c_str(), key.length());
+	}
 	
 	unsigned int current_pos = 0;
-	while (current_pos < len)
+	while (current_pos < message.length())
 	{
 		//initialise chaque octects du block d'entrée a 0
 		memset(blockInput, 0, CRYPTO_BLOCK * 2); 
 		unsigned int bytes;
-		if (len - current_pos < CRYPTO_BLOCK * 2) {
-			bytes = len - current_pos;
+		if (message.length() - current_pos < CRYPTO_BLOCK * 2) {
+			bytes = message.length() - current_pos;
 		}
 		else {
 			bytes = CRYPTO_BLOCK * 2;
@@ -102,9 +113,10 @@ string reseauFeistel(
 			memcpy(blockR, &blockInput[CRYPTO_BLOCK], CRYPTO_BLOCK);
 
 			//R goes thru the F function
-			string tmp = cryptAlgo(blockR, CRYPTO_BLOCK);
+			string tmp = cryptAlgo(blockR, raw_key, CRYPTO_BLOCK);
 			memset(blockR, 0, CRYPTO_BLOCK);
 			memcpy(blockR, tmp.c_str(), tmp.length());
+
 			//unaltered R block becomes the next L block
 			memcpy(blockInput, &blockInput[CRYPTO_BLOCK], CRYPTO_BLOCK);
 			//xor L block with transformed R block and
@@ -118,38 +130,45 @@ string reseauFeistel(
 		memcpy(blockInput, &blockInput[CRYPTO_BLOCK], CRYPTO_BLOCK);
 		memcpy(&blockInput[CRYPTO_BLOCK], blockR, CRYPTO_BLOCK);
 
-		result.append(reinterpret_cast<const char*>(blockInput), CRYPTO_BLOCK * 2);
+		cryptogram.append(reinterpret_cast<const char*>(blockInput), CRYPTO_BLOCK * 2);
 	}
 	
-	return result;
+	return cryptogram;
 }
 
-string useSBox(const unsigned char *uc_msg, unsigned int len) {
-	string msg64 = base64_encode(uc_msg, len);
+string encryptionAlgo(
+	const unsigned char* block,
+	const unsigned char* key,
+	unsigned lenght
+) {
+	string combined_block(lenght, 'x');
 
-	string crypto(msg64.length() / 2, 'x');
+	//xor le bloque avec la clé
+	for (unsigned i = 0; i < lenght; i++) {
+		combined_block[i] = block[i] ^ key[i];
+	}
+
+	return useSBox(combined_block, lenght);
+	//return string(reinterpret_cast<const char*>(message), lenght);
+}
+
+string useSBox(const string& msg, unsigned int len) {
+	const unsigned char* uc_msg;
+	uc_msg = reinterpret_cast<const unsigned char*>(msg.c_str());
+
+	string msg64 = base64_encode(uc_msg, len); //<-internet code
+
+	string crypto_block(msg64.length() / 2, 'x');
 	unsigned long long bit8;
 	for (string::size_type i = 0; i < msg64.length(); i += 2) {
 		bit8 = Sbox[msg64[i]] << 4;
 		bit8 += Sbox[msg64[i + 1]];
-		crypto[i / 2] = static_cast<char>(bit8);
+		crypto_block[i / 2] = static_cast<char>(bit8);
 	}
-	return crypto;
+	return crypto_block;
 }
 
-
-string extractMsg(string str) {
-	return string(str, 0, str.length() - BLOCK_SIZE);
-}
-
-bool verifyMAC(string str, string key) {
-	string the_msg = str.substr(0, str.length() - BLOCK_SIZE);
-	string the_MAC = str.substr(str.length() - BLOCK_SIZE, BLOCK_SIZE);
-
-	return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
-}
-
-string simpleHMCA(string message, string key) {
+string simpleHMCA(const string& message, const string& key) {
 	unsigned char key_plus[BLOCK_SIZE];
 	memset(key_plus, 0, BLOCK_SIZE);
 	if (key.length() < BLOCK_SIZE) {
@@ -179,7 +198,7 @@ string simpleHMCA(string message, string key) {
 	return str_out;
 }
 
-string simpleHash(string message) {
+string simpleHash(const string& message) {
 
 	unsigned char* raw_message = (unsigned char*)message.c_str();
 	unsigned char block[BLOCK_SIZE];
@@ -196,7 +215,7 @@ string simpleHash(string message) {
 		memcpy(block, &raw_message[current_pos], bytes);
 		current_pos += bytes;
 
-		rotate_l(block, BLOCK_SIZE);
+		rotate_l(block, BLOCK_SIZE); //<-internet code
 
 		for (unsigned i = 0; i < BLOCK_SIZE; i++) {
 			result[i] ^= block[i];
@@ -205,6 +224,21 @@ string simpleHash(string message) {
 	}
 	string str((char*)result, BLOCK_SIZE);
 	return str;
+}
+
+string extractMsg(const string& str) {
+	return string(str, 0, str.length() - BLOCK_SIZE);
+}
+
+string getMac(const string& message, const string& key) {
+	return simpleHMCA(message, key);
+}
+
+bool verifyMAC(const string& str, const string& key) {
+	string the_msg = str.substr(0, str.length() - BLOCK_SIZE);
+	string the_MAC = str.substr(str.length() - BLOCK_SIZE, BLOCK_SIZE);
+
+	return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
 }
 
 //Internet code start

@@ -4,20 +4,25 @@
 
 void initWSA();
 
-std::string encrypt(std::string);
+std::string encrypt(const std::string&, const std::string&);
 
-std::string encryptionAlgo(const unsigned char*, unsigned);
+std::string decrypt(const std::string&, const std::string&);
 
 std::string reseauFeistel(
-	std::string message,
-	std::string(*cryptAlgo)(const unsigned char*, unsigned),
+	const std::string& message,
+	const std::string& key,
+	std::string(*cryptAlgo)(const unsigned char*, const unsigned char*, unsigned),
 	unsigned turn_count
 	);
 
-std::string simpleHash(std::string message);
+std::string encryptionAlgo(const unsigned char*, const unsigned char*, unsigned);
 
-std::string simpleHMCA(std::string message, std::string key);
+std::string simpleHash(const std::string& message);
 
-std::string extractMsg(std::string);
+std::string simpleHMCA(const std::string& message, const std::string& key);
 
-bool verifyMAC(std::string, std::string);
+std::string extractMsg(const std::string&);
+
+std::string getMac(const std::string& message, const std::string& key);
+
+bool verifyMAC(const std::string&, const std::string&);

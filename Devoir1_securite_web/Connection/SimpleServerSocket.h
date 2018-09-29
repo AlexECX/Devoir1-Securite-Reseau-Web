@@ -10,7 +10,7 @@ public:
 	SimpleServerSocket(short cPort);
 	virtual ~SimpleServerSocket();
 
-	void bindSocket(char * szServer, short cPort);
+	void bindSocket(const char * szServer, short cPort);
 
 	SimpleSocket acceptSocket();
 

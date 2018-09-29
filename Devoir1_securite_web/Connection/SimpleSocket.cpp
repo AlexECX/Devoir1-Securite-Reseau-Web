@@ -14,7 +14,7 @@ SimpleSocket::SimpleSocket(SOCKET socket): Connection(socket)
 {
 }
 
-SimpleSocket::SimpleSocket(char * szServer, short cPort)
+SimpleSocket::SimpleSocket(const char * szServer, short cPort)
 {
 	connectSocket(szServer, cPort);
 }
@@ -24,7 +24,7 @@ SimpleSocket::~SimpleSocket()
 {
 }
 
-void SimpleSocket::connectSocket(char * szServer, short cPort)
+void SimpleSocket::connectSocket(const char * szServer, short cPort)
 {
 	LPHOSTENT lpHostEntry;
 

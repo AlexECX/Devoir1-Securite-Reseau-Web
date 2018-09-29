@@ -46,6 +46,7 @@ int main(int argc, char **argv)
 void runServer(short nPort)
 {
 	string msg = "";
+	string cryptogram = "";
 	try
 	{
 		SimpleServerSocket server = SimpleServerSocket(nPort);
@@ -58,25 +59,28 @@ void runServer(short nPort)
 		s1.recvMessage(msg);
 		if (verifyMAC(msg, agnesse_key)) {
 			msg = extractMsg(msg);
-			s2.sendMessage(msg + simpleHMCA(msg, bob_key));
+			cryptogram = encrypt(decrypt(msg, agnesse_key), bob_key);
+			s2.sendMessage(cryptogram + getMac(msg, bob_key));
 		}
 		else
 		{
-			msg = "MAC error from Clement";
-			s1.sendMessage(msg + simpleHMCA(msg, agnesse_key));
-			msg = "Agnesse MAC was refused";
-			s2.sendMessage(msg + simpleHMCA(msg, bob_key));
+			cryptogram = encrypt("MAC error from Clement", agnesse_key);
+			s1.sendMessage(cryptogram + getMac(msg, agnesse_key));
+			cryptogram = encrypt("Agnesse MAC was refused", bob_key);
+			s2.sendMessage(cryptogram + getMac(msg, bob_key));
 		}
 
 		s2.recvMessage(msg);
 		if (verifyMAC(msg, bob_key)) {
 			msg = extractMsg(msg);
-			s1.sendMessage(msg + simpleHMCA(msg, agnesse_key));
+			cryptogram = encrypt(decrypt(msg, bob_key), agnesse_key);
+			s1.sendMessage(cryptogram + getMac(msg, agnesse_key));
 		}
 		else
 		{
 			msg = "Bob MAC was refused";
-			s1.sendMessage(msg + simpleHMCA(msg, agnesse_key));
+			cryptogram = encrypt(msg, bob_key);
+			s1.sendMessage(cryptogram + getMac(msg, agnesse_key));
 		}		
 		
 	}

@@ -15,13 +15,13 @@ using namespace std;
 //#define HOST "P2-4020-21" //Can be Name or IP address
 //#define PORT 2030
 
-void runClient(short nPort, char* host);
+void runClient(short nPort, const char* host);
 void scriptedConvo(SimpleSocket client, string& msg);
 
 int main(int argc, char **argv)
 {
 	short nPort;
-	char* host;
+	const char* host;
 
 	//
 	// Check for the host and port arguments
@@ -52,22 +52,9 @@ int main(int argc, char **argv)
 
 }
 
-void runClient(short nPort, char * host)
+void runClient(short nPort, const char * host)
 {
-	string message = "HelloFrom\nTheOtherSideHelloFrom\nééééTheOther\n  .Side$";
-	cout << endl << message;
-	message = encrypt(message);
-	cout << endl <<  message;
-
-	message = encrypt(message);
-	cout << endl << message;
-
-
-	
-	
-
-
-	/*try
+	try
 	{
 		string msg = "";
 		bool connected = false;
@@ -94,7 +81,7 @@ void runClient(short nPort, char * host)
 	{
 		cout << endl << e.what();
 	}
-	*/
+	
 
 }
 
@@ -104,22 +91,28 @@ void scriptedConvo(SimpleSocket client, string& msg) {
 
 	cout << "\nwaiting for Agnesse";
 	client.recvMessage(msg);
-	cout << "\nreceived \"" << extractMsg(msg) << "\"";
+	msg = extractMsg(msg);
+	cout << "\nreceived \"" << msg << "\"";
+	cout << "\nreceived \"" << decrypt(msg, bob_key) << "\"";
 
 	bool mac_result = verifyMAC(msg, bob_key);
 	cout << "\nthe verifyMAC result is: " << (mac_result == true ? "True" : "False");
 
 	if (mac_result == true) {
-		cout << "\nsending \"Hello\" to Agnesse";
 		msg = "Hello from Bob";
-		string mac = simpleHMCA(msg, bob_key);
+		cout << "\nsending \"" << msg << "\" to Agnesse";
+		msg = encrypt(msg, bob_key);
+		cout << "\nsending \"" << msg << "\" to Agnesse";
+		
+		string mac = getMac(msg, bob_key);
 		cout << "\n The MAC is " << mac;
 		client.sendMessage(msg + mac);
 	}
 	else
 	{
-		cout << "\nsending MAC error";
 		msg = "MAC error from Bob";
-		client.sendMessage(msg + simpleHMCA(msg, bob_key));
+		cout << "\nsending \"" << msg << "\"";
+		msg = encrypt(msg, bob_key);
+		client.sendMessage(msg + getMac(msg, bob_key));
 	}
 }

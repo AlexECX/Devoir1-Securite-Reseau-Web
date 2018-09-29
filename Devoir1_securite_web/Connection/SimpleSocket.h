@@ -4,10 +4,10 @@ class SimpleSocket : public Connection
 {
 public:
 	SimpleSocket();
-	SimpleSocket(SOCKET socket);
-	SimpleSocket(char *szServer, short cPort);
+	SimpleSocket(const SOCKET socket);
+	SimpleSocket(const char *szServer, short cPort);
 	virtual ~SimpleSocket();
 
-	void connectSocket(char *szServer, short cPort);
+	void connectSocket(const char *szServer, short cPort);
 };
 
