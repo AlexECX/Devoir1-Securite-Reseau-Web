@@ -16,7 +16,7 @@ using namespace std;
 //#define PORT 2030
 
 void runClient(short nPort, const char* host);
-void scriptedConvo(SimpleSocket client, string& msg);
+void scriptedConvo(SimpleSocket client, string& transit);
 
 int main(int argc, char **argv)
 {
@@ -54,9 +54,16 @@ int main(int argc, char **argv)
 
 void runClient(short nPort, const char * host)
 {
+	/*string transit = "Hello form ";
+	transit = encrypt(transit, "1234");
+	cout << endl << transit;
+	transit = decrypt(transit, "1234");
+	cout << endl << transit;
+*/
+
 	try
 	{
-		string msg = "";
+		string transit = "";
 		bool connected = false;
 		SimpleSocket client = SimpleSocket();
 
@@ -75,7 +82,7 @@ void runClient(short nPort, const char * host)
 
 		}
 		
-		scriptedConvo(client, msg);
+		scriptedConvo(client, transit);
 	}
 	catch (const ConnectionException e)
 	{
@@ -85,34 +92,44 @@ void runClient(short nPort, const char * host)
 
 }
 
-void scriptedConvo(SimpleSocket client, string& msg) {
+void scriptedConvo(SimpleSocket client, string& transit) {
 	string bob_key = "1234";
-
+	string message;
 
 	cout << "\nwaiting for Agnesse";
-	client.recvMessage(msg);
-	msg = extractMsg(msg);
-	cout << "\nreceived \"" << msg << "\"";
-	cout << "\nreceived \"" << decrypt(msg, bob_key) << "\"";
+	client.recvMessage(transit);
+	cout << "\nreceived \"" << transit << "\"";
+	transit = "Hello from Bob";
+	cout << "\nsending \"" << transit << "\" to Agnesse";
+	client.sendMessage(transit);
 
-	bool mac_result = verifyMAC(msg, bob_key);
+
+	/**
+	cout << "\nwaiting for Agnesse";
+	client.recvMessage(transit);
+	message = extractMsg(transit);
+	cout << "\nreceived \"" << message << "\"";
+	cout << "\nreceived \"" << decrypt(message, bob_key) << "\"";
+
+	bool mac_result = verifyMAC(transit, bob_key);
 	cout << "\nthe verifyMAC result is: " << (mac_result == true ? "True" : "False");
 
 	if (mac_result == true) {
-		msg = "Hello from Bob";
-		cout << "\nsending \"" << msg << "\" to Agnesse";
-		msg = encrypt(msg, bob_key);
-		cout << "\nsending \"" << msg << "\" to Agnesse";
+		transit = "Hello from Bob";
+		cout << "\nsending \"" << transit << "\" to Agnesse";
+		transit = encrypt(transit, bob_key);
+		cout << "\nsending \"" << transit << "\" to Agnesse";
 		
-		string mac = getMac(msg, bob_key);
+		string mac = getMac(transit, bob_key);
 		cout << "\n The MAC is " << mac;
-		client.sendMessage(msg + mac);
+		client.sendMessage(transit + mac);
 	}
 	else
 	{
-		msg = "MAC error from Bob";
-		cout << "\nsending \"" << msg << "\"";
-		msg = encrypt(msg, bob_key);
-		client.sendMessage(msg + getMac(msg, bob_key));
+		message = "MAC error from Bob";
+		cout << "\nsending \"" << message << "\"";
+		transit = encrypt(message, bob_key);
+		client.sendMessage(transit + getMac(message, bob_key));
 	}
+	/**/
 }

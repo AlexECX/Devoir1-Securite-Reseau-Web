@@ -14,7 +14,7 @@ using namespace std;
 #define PORT 8812
 
 void runClient(short nPort, const char* host);
-void scriptedConvo(SimpleSocket client, string& msg);
+void scriptedConvo(SimpleSocket client, string& transit);
 
 int main(int argc, char **argv)
 {
@@ -29,7 +29,7 @@ int main(int argc, char **argv)
 	host = HOST;
 #else
 	if (argc != 3) {
-		cout << "\nSyntax: ServerName PortNumber"; //test
+		cout << "\nSyntax: ServerName PortNumber";
 		cout << endl;
 		return 0;
 	}
@@ -55,7 +55,7 @@ void runClient(short nPort, const char * host)
 	
 	try
 	{
-		string msg = "";
+		string transit = "";
 		bool connected = false;
 		SimpleSocket client = SimpleSocket();
 
@@ -71,10 +71,9 @@ void runClient(short nPort, const char * host)
 				cout << endl << e.what();
 				this_thread::sleep_for(5s);
 			}
-
-			scriptedConvo(client, msg);
-
 		}
+
+		scriptedConvo(client, transit);
 
 		}
 	catch (const ConnectionException e)
@@ -85,23 +84,31 @@ void runClient(short nPort, const char * host)
 
 }
 
-void scriptedConvo(SimpleSocket client, string& msg) {
+void scriptedConvo(SimpleSocket client, string& transit) {
 	string agnesse_key = "abcd";
 
-	msg = "Hello from Agnesse";
-	cout << "\nsending \"" << msg << "\" to Bob";
-	msg = encrypt(msg, agnesse_key);
-	cout << "\nsending \"" << msg << "\" to Bob";
-	string mac = getMac(msg, agnesse_key);
+	transit = "Hello from Agnesse";
+	cout << "\nsending \"" << transit << "\" to Bob";
+	client.sendMessage(transit);
+	cout << "\nwaiting for Bob";
+	client.recvMessage(transit);
+	cout << "\nreceived \"" << transit << "\"";
+
+	/**
+	transit = "Hello from Agnesse";
+	cout << "\nsending \"" << transit << "\" to Bob";
+	transit = encrypt(transit, agnesse_key);
+	cout << "\nsending \"" << transit << "\" to Bob";
+	string mac = getMac(transit, agnesse_key);
 	cout << "\n The MAC is " << mac;
 
-	client.sendMessage(msg + mac);
+	client.sendMessage(transit + mac);
 	cout << "\nwaiting for Bob";
-	client.recvMessage(msg);
-	msg = extractMsg(msg);
-	cout << "\nreceived \"" << msg << "\"";
-	msg = decrypt(msg, agnesse_key);
-	cout << "\nreceived \"" << msg << "\"";
-	cout << "\nthe verifyMAC result is: " << ((verifyMAC(msg, agnesse_key) == true) ? "True" : "False");
-
+	client.recvMessage(transit);
+	transit = extractMsg(transit);
+	cout << "\nreceived \"" << transit << "\"";
+	transit = decrypt(transit, agnesse_key);
+	cout << "\nreceived \"" << transit << "\"";
+	cout << "\nthe verifyMAC result is: " << ((verifyMAC(transit, agnesse_key) == true) ? "True" : "False");
+	/**/
 }
