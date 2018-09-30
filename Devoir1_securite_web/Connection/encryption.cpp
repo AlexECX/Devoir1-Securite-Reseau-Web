@@ -31,7 +31,7 @@ string decrypt(const string& message, const string& key) {
 
 
 //Algorithme de chiffrement par bloc. Utilise le mode d'operation CBC
-//avec un r�seau de Feistel.
+//avec un r�seau de Feistel et une fonction F au choix (#define ALGO).
 
 string cbcEncrypt(const string& message, const string& key)
 {
@@ -49,17 +49,22 @@ string cbcEncrypt(const string& message, const string& key)
 
 	for (unsigned i = 0; i <= block_count; i++) {
 
-		if (i == block_count) {
+		if (i == block_count) { //si est le dernier bloc
+			//methode de padding PKCS5
 
-			if (!residue) {
-				memset(blockInput, CHAIN_BLOCK, CHAIN_BLOCK);
-			}
-			else {
+			//si input < que taille bloc, ajoute N bytes de padding de valeur N,
+			//où N = le nombre de bytes pour completer le bloc.
+			if (residue) { 
 				memset(blockInput, CHAIN_BLOCK - residue, CHAIN_BLOCK);
 				bytes = residue;
 				//copie n bytes a partir du message dans le bloc d'entr�e
 				memcpy(blockInput, &message.c_str()[i * CHAIN_BLOCK], bytes);
-			}
+}			
+			//sinon, le message est un facteur de taille bloc. 
+			//On ajoute donc un bloc complet de padding où N = la taille d'un bloc.
+			else {
+				memset(blockInput, CHAIN_BLOCK, CHAIN_BLOCK);
+				}
 		}
 		else {
 			//initialise chaque octects du block d'entr�e a 0
