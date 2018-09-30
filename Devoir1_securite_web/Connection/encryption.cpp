@@ -31,7 +31,7 @@ string decrypt(const string& message, const string& key) {
 
 
 //Algorithme de chiffrement par bloc. Utilise le mode d'operation CBC
-//avec un réseau de Feistel.
+//avec un rï¿½seau de Feistel.
 
 string cbcEncrypt(const string& message, const string& key)
 {
@@ -41,7 +41,7 @@ string cbcEncrypt(const string& message, const string& key)
 	unsigned int bytes;
 	string cryptogram = "";
 
-	//pour s'assurer que la taille de la clé == taille d'un bloc,
+	//pour s'assurer que la taille de la clï¿½ == taille d'un bloc,
 	//la tronque si tros grosse, la complete avec des 0 si tros petite.
 	unsigned char raw_key[FEISTEL_BLOCK];
 	memset(raw_key, 0, FEISTEL_BLOCK);
@@ -57,7 +57,7 @@ string cbcEncrypt(const string& message, const string& key)
 
 	unsigned int current_pos = 0;
 	while (current_pos < message.length()) {
-		//initialise chaque octects du block d'entrée a 0
+		//initialise chaque octects du block d'entrï¿½e a 0
 		memset(blockInput, 0, CHAIN_BLOCK);
 
 		if (message.length() - current_pos < CHAIN_BLOCK) {
@@ -67,11 +67,11 @@ string cbcEncrypt(const string& message, const string& key)
 			bytes = CHAIN_BLOCK;
 		}
 
-		//copie n bytes a partir message dans le bloc d'entrée
+		//copie n bytes a partir message dans le bloc d'entrï¿½e
 		memcpy(blockInput, &message.c_str()[current_pos], bytes);
 		current_pos += bytes;
 
-		//xor avec entrée précédente
+		//xor avec entrï¿½e prï¿½cï¿½dente
 		for (unsigned i = 0; i < CHAIN_BLOCK; i++) {
 			blockInput[i] ^= blockXOR[i];
 		}
@@ -79,9 +79,9 @@ string cbcEncrypt(const string& message, const string& key)
 		//passe le bloc par le reseau de Feistel
 		reseauFeistel(blockInput, raw_key, FEISTEL_TURN);
 
-		//ajoute l'entrée crypté au cryptogramme
+		//ajoute l'entrï¿½e cryptï¿½ au cryptogramme
 		cryptogram.append(reinterpret_cast<const char*>(blockInput), CHAIN_BLOCK);
-		//l'entrée crypté sera utilisé pour le prochain xor
+		//l'entrï¿½e cryptï¿½ sera utilisï¿½ pour le prochain xor
 		memcpy(blockXOR, blockInput, CHAIN_BLOCK);
 	}
 
@@ -97,7 +97,7 @@ string cbcDecrypt(const string& message, const string& key)
 	unsigned int bytes;
 	string cryptogram = "";
 
-	//pour s'assurer que la taille de la clé == taille d'un bloc,
+	//pour s'assurer que la taille de la clï¿½ == taille d'un bloc,
 	//la tronque si tros grosse, la complete avec des 0 si tros petite.
 	unsigned char raw_key[FEISTEL_BLOCK];
 	memset(raw_key, 0, FEISTEL_BLOCK);
@@ -113,7 +113,7 @@ string cbcDecrypt(const string& message, const string& key)
 
 	unsigned int current_pos = 0;
 	while (current_pos < message.length()) {
-		//initialise chaque octects du block d'entrée a 0
+		//initialise chaque octects du block d'entrï¿½e a 0
 		memset(blockInput, 0, CHAIN_BLOCK);
 
 		if (message.length() - current_pos < CHAIN_BLOCK) {
@@ -123,25 +123,25 @@ string cbcDecrypt(const string& message, const string& key)
 			bytes = CHAIN_BLOCK;
 		}
 
-		//copie n bytes a partir message dans le bloc d'entrée
+		//copie n bytes a partir message dans le bloc d'entrï¿½e
 		memcpy(blockInput, &message.c_str()[current_pos], bytes);
 		current_pos += bytes;
 
-		//garde une copie du message crypté, IV pour le prochain
+		//garde une copie du message cryptï¿½, IV pour le prochain
 		memcpy(cpyInput, blockInput, CHAIN_BLOCK);
 
 
 		//passe le bloc par le reseau de Feistel
 		reseauFeistel(blockInput, raw_key, FEISTEL_TURN);
 
-		//xor avec entrée précédente
+		//xor avec entrï¿½e prï¿½cï¿½dente
 		for (unsigned i = 0; i < CHAIN_BLOCK; i++) {
 			blockInput[i] ^= blockXOR[i];
 		}
 
-		//ajoute l'entrée crypté au cryptogramme
+		//ajoute l'entrï¿½e cryptï¿½ au cryptogramme
 		cryptogram.append(reinterpret_cast<const char*>(blockInput), CHAIN_BLOCK);
-		//l'entrée crypté sera utilisé pour le prochain xor
+		//l'entrï¿½e cryptï¿½ sera utilisï¿½ pour le prochain xor
 		memcpy(blockXOR, cpyInput, CHAIN_BLOCK);
 	}
 
@@ -154,7 +154,7 @@ void reseauFeistel(unsigned char* blockInput, unsigned char* raw_key, unsigned t
 	unsigned char blockL[FEISTEL_BLOCK];
 	unsigned char blockR[FEISTEL_BLOCK];
 
-	//commence les tours de Feistel en utilisant le block d'entrée
+	//commence les tours de Feistel en utilisant le block d'entrï¿½e
 	for (unsigned i = 0; i < turn_count; i++) {
 		memset(blockL, 0, FEISTEL_BLOCK);
 		memset(blockR, 0, FEISTEL_BLOCK);
@@ -190,6 +190,7 @@ string vigenere(const unsigned char* block, const unsigned char* key,
 	static bool iter = false;
 
 	if (!iter) {
+		iter = true;
 		int i;
 		int j;
 		char caractere = -128;
@@ -223,7 +224,7 @@ string xorSbox(const unsigned char* block, const unsigned char* key,
 {
 	string combined_block(lenght, 'x');
 
-	//xor le bloc avec la clé
+	//xor le bloc avec la clï¿½
 	for (unsigned i = 0; i < lenght; i++) {
 		combined_block[i] = block[i] ^ key[i];
 	}
@@ -234,33 +235,34 @@ string xorSbox(const unsigned char* block, const unsigned char* key,
 }
 
 
-//Basé sur une S-box de DES. Prend en entrée un char en base 64, qui représente
-//un 6 bits, et le map a la valeur de 4 bits correspondante de la S-Box.
-map<char, unsigned int> Sbox = {
-		{'A', 0x02}, {'B', 0x240}, {'C', 0x04}, {'D', 0x01}, {'E', 0x07},
-		{'F', 0x0A}, {'G', 0x0B}, {'H', 0x06}, {'I', 0x08}, {'J', 0x05},
-		{'K', 0x03}, {'L', 0x0F}, {'M', 0x0D}, {'N', 0x00}, {'O', 0x0E},
-		{'P', 0x09},
-		//
-		{'Q', 0x0E}, {'R', 0x0B}, {'S', 0x02}, {'T', 0x240}, {'U', 0x04},
-		{'V', 0x07}, {'W', 0x0D}, {'X', 0x01}, {'Y', 0x05}, {'Z', 0x00},
-		{'a', 0x0F}, {'b', 0x0A}, {'c', 0x03}, {'d', 0x09}, {'e', 0x08},
-		{'f', 0x06},
-		//
-		{'g', 0x04}, {'h', 0x02}, {'i', 0x01}, {'j', 0x0B}, {'k', 0x0A},
-		{'l', 0x0D}, {'m', 0x07}, {'n', 0x08}, {'o', 0x0F}, {'p', 0x09},
-		{'q', 0x240}, {'r', 0x05}, {'s', 0x06}, {'t', 0x03}, {'u', 0x00},
-		{'v', 0x0E},
-		//
-		{'w', 0x0B}, {'x', 0x08}, {'y', 0x240}, {'z', 0x07}, {'0', 0x01},
-		{'1', 0x0E}, {'2', 0x02}, {'3', 0x0D}, {'4', 0x06}, {'5', 0x0F},
-		{'6', 0x00}, {'7', 0x09}, {'8', 0x0A}, {'9', 0x04}, {'+', 0x05},
-		{'/', 0x03},
-		//		
-		{'=', 0x00},
-};
-
 string useSBox(const string& msg, unsigned int len) {
+
+	//Basï¿½ sur une S-box de DES. Prend en entrï¿½e un char en base 64, qui reprï¿½sente
+	//un 6 bits, et le map a la valeur de 4 bits correspondante de la S-Box.
+	static map<char, unsigned int> Sbox = {
+			{'A', 0x02}, {'B', 0x240}, {'C', 0x04}, {'D', 0x01}, {'E', 0x07},
+			{'F', 0x0A}, {'G', 0x0B}, {'H', 0x06}, {'I', 0x08}, {'J', 0x05},
+			{'K', 0x03}, {'L', 0x0F}, {'M', 0x0D}, {'N', 0x00}, {'O', 0x0E},
+			{'P', 0x09},
+			//
+			{'Q', 0x0E}, {'R', 0x0B}, {'S', 0x02}, {'T', 0x240}, {'U', 0x04},
+			{'V', 0x07}, {'W', 0x0D}, {'X', 0x01}, {'Y', 0x05}, {'Z', 0x00},
+			{'a', 0x0F}, {'b', 0x0A}, {'c', 0x03}, {'d', 0x09}, {'e', 0x08},
+			{'f', 0x06},
+			//
+			{'g', 0x04}, {'h', 0x02}, {'i', 0x01}, {'j', 0x0B}, {'k', 0x0A},
+			{'l', 0x0D}, {'m', 0x07}, {'n', 0x08}, {'o', 0x0F}, {'p', 0x09},
+			{'q', 0x240}, {'r', 0x05}, {'s', 0x06}, {'t', 0x03}, {'u', 0x00},
+			{'v', 0x0E},
+			//
+			{'w', 0x0B}, {'x', 0x08}, {'y', 0x240}, {'z', 0x07}, {'0', 0x01},
+			{'1', 0x0E}, {'2', 0x02}, {'3', 0x0D}, {'4', 0x06}, {'5', 0x0F},
+			{'6', 0x00}, {'7', 0x09}, {'8', 0x0A}, {'9', 0x04}, {'+', 0x05},
+			{'/', 0x03},
+			//		
+			{'=', 0x00},
+	};
+
 	const unsigned char* uc_msg;
 	uc_msg = reinterpret_cast<const unsigned char*>(msg.c_str());
 
@@ -290,7 +292,7 @@ string simpleHMCA(const string& message, const string& key);
 #define BLOCK_SIZE 128	//octets (ou chars)
 
 //Interface
-string getMac(const string& message, const string& key) {
+string generateMac(const string& message, const string& key) {
 	return simpleHMCA(message, key);
 }
 
@@ -305,8 +307,8 @@ string extractMsg(const string& str) {
 	return string(str, 0, str.length() - BLOCK_SIZE);
 }
 
-//Traitement successif des données par un rotation des bits d'un bloc
-//suivit d'un XOR avec le code de hashage (initialisé à 0).
+//Traitement successif des donnï¿½es par un rotation des bits d'un bloc
+//suivit d'un XOR avec le code de hashage (initialisï¿½ ï¿½ 0).
 string simpleHash(const string& message) {
 
 	unsigned char* raw_message = (unsigned char*)message.c_str();
