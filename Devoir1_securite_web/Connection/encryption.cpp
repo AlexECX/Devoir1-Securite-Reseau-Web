@@ -190,6 +190,7 @@ string vigenere(const unsigned char* block, const unsigned char* key,
 	static bool iter = false;
 
 	if (!iter) {
+		iter = true;
 		int i;
 		int j;
 		char caractere = -128;
@@ -234,33 +235,34 @@ string xorSbox(const unsigned char* block, const unsigned char* key,
 }
 
 
-//Basé sur une S-box de DES. Prend en entrée un char en base 64, qui représente
-//un 6 bits, et le map a la valeur de 4 bits correspondante de la S-Box.
-map<char, unsigned int> Sbox = {
-		{'A', 0x02}, {'B', 0x240}, {'C', 0x04}, {'D', 0x01}, {'E', 0x07},
-		{'F', 0x0A}, {'G', 0x0B}, {'H', 0x06}, {'I', 0x08}, {'J', 0x05},
-		{'K', 0x03}, {'L', 0x0F}, {'M', 0x0D}, {'N', 0x00}, {'O', 0x0E},
-		{'P', 0x09},
-		//
-		{'Q', 0x0E}, {'R', 0x0B}, {'S', 0x02}, {'T', 0x240}, {'U', 0x04},
-		{'V', 0x07}, {'W', 0x0D}, {'X', 0x01}, {'Y', 0x05}, {'Z', 0x00},
-		{'a', 0x0F}, {'b', 0x0A}, {'c', 0x03}, {'d', 0x09}, {'e', 0x08},
-		{'f', 0x06},
-		//
-		{'g', 0x04}, {'h', 0x02}, {'i', 0x01}, {'j', 0x0B}, {'k', 0x0A},
-		{'l', 0x0D}, {'m', 0x07}, {'n', 0x08}, {'o', 0x0F}, {'p', 0x09},
-		{'q', 0x240}, {'r', 0x05}, {'s', 0x06}, {'t', 0x03}, {'u', 0x00},
-		{'v', 0x0E},
-		//
-		{'w', 0x0B}, {'x', 0x08}, {'y', 0x240}, {'z', 0x07}, {'0', 0x01},
-		{'1', 0x0E}, {'2', 0x02}, {'3', 0x0D}, {'4', 0x06}, {'5', 0x0F},
-		{'6', 0x00}, {'7', 0x09}, {'8', 0x0A}, {'9', 0x04}, {'+', 0x05},
-		{'/', 0x03},
-		//		
-		{'=', 0x00},
-};
-
 string useSBox(const string& msg, unsigned int len) {
+
+	//Basé sur une S-box de DES. Prend en entrée un char en base 64, qui représente
+	//un 6 bits, et le map a la valeur de 4 bits correspondante de la S-Box.
+	static map<char, unsigned int> Sbox = {
+			{'A', 0x02}, {'B', 0x240}, {'C', 0x04}, {'D', 0x01}, {'E', 0x07},
+			{'F', 0x0A}, {'G', 0x0B}, {'H', 0x06}, {'I', 0x08}, {'J', 0x05},
+			{'K', 0x03}, {'L', 0x0F}, {'M', 0x0D}, {'N', 0x00}, {'O', 0x0E},
+			{'P', 0x09},
+			//
+			{'Q', 0x0E}, {'R', 0x0B}, {'S', 0x02}, {'T', 0x240}, {'U', 0x04},
+			{'V', 0x07}, {'W', 0x0D}, {'X', 0x01}, {'Y', 0x05}, {'Z', 0x00},
+			{'a', 0x0F}, {'b', 0x0A}, {'c', 0x03}, {'d', 0x09}, {'e', 0x08},
+			{'f', 0x06},
+			//
+			{'g', 0x04}, {'h', 0x02}, {'i', 0x01}, {'j', 0x0B}, {'k', 0x0A},
+			{'l', 0x0D}, {'m', 0x07}, {'n', 0x08}, {'o', 0x0F}, {'p', 0x09},
+			{'q', 0x240}, {'r', 0x05}, {'s', 0x06}, {'t', 0x03}, {'u', 0x00},
+			{'v', 0x0E},
+			//
+			{'w', 0x0B}, {'x', 0x08}, {'y', 0x240}, {'z', 0x07}, {'0', 0x01},
+			{'1', 0x0E}, {'2', 0x02}, {'3', 0x0D}, {'4', 0x06}, {'5', 0x0F},
+			{'6', 0x00}, {'7', 0x09}, {'8', 0x0A}, {'9', 0x04}, {'+', 0x05},
+			{'/', 0x03},
+			//		
+			{'=', 0x00},
+	};
+
 	const unsigned char* uc_msg;
 	uc_msg = reinterpret_cast<const unsigned char*>(msg.c_str());
 
