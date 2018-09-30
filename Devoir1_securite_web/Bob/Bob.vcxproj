@@ -124,7 +124,6 @@
     <ClCompile Include="..\Connection\Connection.cpp" />
     <ClCompile Include="..\Connection\ConnectionException.cpp" />
     <ClCompile Include="..\Connection\encryption.cpp" />
-    <ClCompile Include="..\Connection\hashing.cpp" />
     <ClCompile Include="..\Connection\SimpleSocket.cpp" />
     <ClCompile Include="..\Connection\Utils.cpp" />
     <ClCompile Include="main.cpp" />
@@ -134,7 +133,6 @@
     <ClInclude Include="..\Connection\Connection.h" />
     <ClInclude Include="..\Connection\ConnectionException.h" />
     <ClInclude Include="..\Connection\encryption.h" />
-    <ClInclude Include="..\Connection\hashing.h" />
     <ClInclude Include="..\Connection\SimpleSocket.h" />
     <ClInclude Include="..\Connection\Utils.h" />
   </ItemGroup>
