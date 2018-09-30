@@ -35,7 +35,7 @@
     <ClCompile Include="..\Connection\SimpleServerSocket.cpp" />
     <ClCompile Include="..\Connection\SimpleSocket.cpp" />
     <ClCompile Include="..\Connection\Utils.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mainC.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>

@@ -126,7 +126,7 @@
     <ClCompile Include="..\Connection\encryption.cpp" />
     <ClCompile Include="..\Connection\SimpleSocket.cpp" />
     <ClCompile Include="..\Connection\Utils.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="mainB.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\Connection\base64.h" />

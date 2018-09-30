@@ -6,6 +6,7 @@
 #include "ConnectionException.h"
 #include "SimpleServerSocket.h"
 #include "Utils.h"
+#include "encryption.h"
 
 using namespace std;
 
@@ -13,6 +14,8 @@ using namespace std;
 #define PORT 2030
 
 void runServer(short nPort);
+void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB);
+void scriptedConvo(SimpleSocket clientA, SimpleSocket clientB);
 void initialisationTableauVigenere(char[256][256]);
 void affichageTableauVigenere(char[256][256]);
 string ouvertureFichierEnregistrementString(string);
@@ -53,6 +56,91 @@ int main(int argc, char **argv)
 
 void runServer(short nPort)
 {
+
+	try
+	{
+		SimpleServerSocket server = SimpleServerSocket(nPort);
+		SimpleSocket clientA = server.acceptSocket();
+		SimpleSocket clientB = server.acceptSocket();
+
+		scriptedConvoTest(clientA, clientB);
+		
+	}
+	catch (const ConnectionException& e)
+	{
+		cout << endl << e.what();
+	}
+	
+	
+}
+
+void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
+	string message = "";
+
+	string bob_key = "bobinoonibob";
+	string agnesse_key = "gadgettegdag";
+
+	//Réception de Agnesse
+	clientA.recvMessage(message);
+	cout << endl << endl;
+	cout << "Crypted message received from Agnesse for Bob: \n" << endl;
+	cout << "\"" << message << "\"" << endl << endl;
+
+	if (verifyMAC(message, agnesse_key)) {
+		//Désencryption d'Agnesse
+		message = decrypt(extractMsg(message), agnesse_key);
+		cout << "Clear message received from Agnesse for Bob: \n" << endl;
+		cout << "\"" << message << "\"" << endl << endl;
+
+		//Encryption pour Bob
+		message = encrypt(message, bob_key);
+		cout << "Message a etre transmit (crypt) a Bob de Agnesse: \n\n";
+		cout << "\"" << message << "\"" << endl << endl;
+
+		//Envoie à Bob
+		clientB.sendMessage(message + generateMac(message, bob_key));
+	}
+	else {
+		cout << endl << "Agnesse MAC incorrect";
+		//Envoie erreurs
+		message = encrypt("MAC error from Clement", agnesse_key);
+		clientA.sendMessage(message + generateMac(message, agnesse_key));
+		message = encrypt("Agnesse MAC incorrect", bob_key);
+		clientB.sendMessage(message + generateMac(message, bob_key));
+	}
+
+
+	//Réception de Bob
+	clientB.recvMessage(message);
+	cout << "Crypted message received from Bob for Agnesse: \n" << endl;
+	cout << "\"" << message << "\"" << endl << endl;
+
+	if (verifyMAC(message, bob_key)) {
+		//Désencryption de Bob
+		message = decrypt(extractMsg(message), bob_key);
+		cout << "Clear message received from Bob for Agnesse: \n" << endl;
+		cout << "\"" << message << "\"" << endl << endl;
+
+		//Encryption pour Agnesse
+		message = encrypt(message, agnesse_key);
+		cout << "Message a etre transmit (crypt) a Agnesse de Bob: \n\n";
+		cout << "\"" << message << "\"" << endl << endl;
+
+		//Envoie à Agnesse
+		clientA.sendMessage(message + generateMac(message, agnesse_key));
+	}
+	else {
+		cout << endl << "Agnesse MAC incorrect";
+		//Envoie erreurs
+		message = encrypt("MAC error from Clement", bob_key);
+		clientB.sendMessage(message + generateMac(message, bob_key));
+		message = encrypt("Bob MAC incorrect", agnesse_key);
+		clientA.sendMessage(message + generateMac(message, agnesse_key));
+	}
+
+}
+
+void scriptedConvo(SimpleSocket clientA, SimpleSocket clientB) {
 	string transit = "";
 	string message = "";
 	string cryptogram = "";
@@ -62,122 +150,59 @@ void runServer(short nPort)
 	int i = 0;
 	int k = 0;
 
-	try
-	{
-		SimpleServerSocket server = SimpleServerSocket(nPort);
-		SimpleSocket s1 = server.acceptSocket();
-		SimpleSocket s2 = server.acceptSocket();
+	string bob_key = "bobinoonibob";
+	string agnesse_key = "gadgettegdag";
 
-		string bob_key = "bobinoonibob";
-		string agnesse_key = "gadgettegdag";
+	//Réception de Agnesse
+	clientA.recvMessage(transit);
+	cout << endl << endl;
+	cout << "Crypted message received from Agnesse for Bob: \n" << endl;
+	cout << transit << endl << endl;
 
-		//Initialisation de la table de Videnere
-		initialisationTableauVigenere(tableauVigenere);
+	//Désencryption d'Agnesse
+	cryptogram = transit;
+	divisionEnBlocs15(cryptogram, tableauBlocMessageCrypt);
+	desencryptionVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, agnesse_key);
+	message = reconstitutionnerString(tableauBlocMessageClair, "clair");
 
-		//Réception de Agnesse
-		s1.recvMessage(transit);
-		cout << "Crypted message received from Agnesse for Bob: \n" << endl;
-		cout << transit << endl << endl;
-		
-		//Désencryption d'Agnesse
-		cryptogram = transit;
-		divisionEnBlocs15(cryptogram, tableauBlocMessageCrypt);
-		desencryptionVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, agnesse_key);
-		message = reconstitutionnerString(tableauBlocMessageClair, "clair");
+	cout << "Clear message received from Agnesse for Bob: \n" << endl;
+	cout << message << endl << endl;
 
-		cout << "Clear message received from Agnesse for Bob: \n" << endl;
-		cout << message << endl << endl;
+	//Encryption pour Bob
+	divisionEnBlocs15(message, tableauBlocMessageClair);
+	cryptageVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, bob_key);
+	cryptogram = reconstitutionnerString(tableauBlocMessageCrypt, "crypt");
+	cout << "Message a etre transmit (crypt) a Bob de Agnesse: \n\n";
+	cout << cryptogram << endl << endl;
 
-		//Encryption pour Bob
-		divisionEnBlocs15(message, tableauBlocMessageClair);
-		cryptageVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, bob_key);
-		cryptogram = reconstitutionnerString(tableauBlocMessageCrypt, "crypt");
-		cout << "Message a etre transmit (crypt) a Bob de Agnesse: \n\n";
-		cout << cryptogram << endl << endl;
+	//Envoie à Bob
+	transit = cryptogram;
+	clientB.sendMessage(transit);
 
-		//Envoie à Bob
-		transit = cryptogram;
-		s2.sendMessage(transit);
+	//Réception de Bob
+	clientB.recvMessage(transit);
+	cout << "Crypted message received from Bob for Agnesse: \n" << endl;
+	cout << transit << endl << endl;
 
-		//Réception de Bob
-		s2.recvMessage(transit);
-		cout << "Crypted message received from Bob for Agnesse: \n" << endl;
-		cout << transit << endl << endl;
+	//Désencryption de Bob
+	cryptogram = transit;
+	divisionEnBlocs15(cryptogram, tableauBlocMessageCrypt);
+	desencryptionVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, bob_key);
+	message = reconstitutionnerString(tableauBlocMessageClair, "clair");
 
-		//Désencryption de Bob
-		cryptogram = transit;
-		divisionEnBlocs15(cryptogram, tableauBlocMessageCrypt);
-		desencryptionVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, bob_key);
-		message = reconstitutionnerString(tableauBlocMessageClair, "clair");
+	cout << "Clear message received from Bob for Agnesse: \n" << endl;
+	cout << message << endl << endl;
 
-		cout << "Clear message received from Bob for Agnesse: \n" << endl;
-		cout << message << endl << endl;
+	//Encryption pour Bob
+	divisionEnBlocs15(message, tableauBlocMessageClair);
+	cryptageVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, agnesse_key);
+	cryptogram = reconstitutionnerString(tableauBlocMessageCrypt, "crypt");
+	cout << "\nMessage a etre transmit (crypt) a Agnesse de Bob: \n\n";
+	cout << cryptogram << endl << endl;
 
-		//Encryption pour Bob
-		divisionEnBlocs15(message, tableauBlocMessageClair);
-		cryptageVigenereCBC(tableauBlocMessageClair, tableauBlocMessageCrypt, tableauVigenere, agnesse_key);
-		cryptogram = reconstitutionnerString(tableauBlocMessageCrypt, "crypt");
-		cout << "\nMessage a etre transmit (crypt) a Agnesse de Bob: \n\n";
-		cout << cryptogram << endl << endl;
-
-		//Envoie à Agnesse
-		transit = cryptogram;
-		s1.sendMessage(transit);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		/**
-		s1.recvMessage(transit);
-		if (verifyMAC(transit, agnesse_key)) {
-			message = extractMsg(transit);
-			cryptogram = encrypt(decrypt(message, agnesse_key), bob_key);
-			s2.sendMessage(cryptogram + getMac(transit, bob_key));
-		}
-		else
-		{
-			cryptogram = encrypt("MAC error from Clement", agnesse_key);
-			s1.sendMessage(cryptogram + getMac(transit, agnesse_key));
-			cryptogram = encrypt("Agnesse MAC was refused", bob_key);
-			s2.sendMessage(cryptogram + getMac(transit, bob_key));
-		}
-
-		s2.recvMessage(transit);
-		if (verifyMAC(transit, bob_key)) {
-			transit = extractMsg(transit);
-			cryptogram = encrypt(decrypt(transit, bob_key), agnesse_key);
-			s1.sendMessage(cryptogram + getMac(transit, agnesse_key));
-		}
-		else
-		{
-			transit = "Bob MAC was refused";
-			cryptogram = encrypt(transit, bob_key);
-			s1.sendMessage(cryptogram + getMac(transit, agnesse_key));
-		}		
-		/**/
-		
-	}
-	catch (const ConnectionException e)
-	{
-		cout << endl << e.what();
-	}
-	
-	
+	//Envoie à Agnesse
+	transit = cryptogram;
+	clientA.sendMessage(transit);
 }
 
 void initialisationTableauVigenere(char tableauVigenere[256][256])

@@ -10,7 +10,7 @@ using namespace std;
 //Fonctions servant au cryptage /----------------------------------------/
 string cbcEncrypt(const string& message, const string& key);
 string cbcDecrypt(const string& message, const string& key);
-void reseauFeistel(unsigned char* blockInput, unsigned char* raw_key, unsigned turn_count);
+void reseauFeistel(unsigned char* blockInput, const string& key, unsigned turn_count);
 string vigenere(const unsigned char*, const unsigned char*, unsigned);
 string xorSbox(const unsigned char*, const unsigned char*, unsigned);
 string useSBox(const string& uc_msg, unsigned int len);
@@ -18,7 +18,7 @@ string useSBox(const string& uc_msg, unsigned int len);
 #define CHAIN_BLOCK 16	//octets (ou chars)
 #define FEISTEL_BLOCK CHAIN_BLOCK / 2
 #define FEISTEL_TURN 16
-#define ALGO vigenere
+#define ALGO xorSbox
 
 //Interface
 string encrypt(const string& message, const string& key) {
@@ -26,7 +26,7 @@ string encrypt(const string& message, const string& key) {
 }
 
 string decrypt(const string& message, const string& key) {
-	return string(cbcDecrypt(message, key).c_str());
+	return cbcDecrypt(message, key);
 }
 
 
@@ -41,50 +41,49 @@ string cbcEncrypt(const string& message, const string& key)
 	unsigned int bytes;
 	string cryptogram = "";
 
-	//pour s'assurer que la taille de la cl� == taille d'un bloc,
-	//la tronque si tros grosse, la complete avec des 0 si tros petite.
-	unsigned char raw_key[FEISTEL_BLOCK];
-	memset(raw_key, 0, FEISTEL_BLOCK);
-	if (key.length() > FEISTEL_BLOCK) {
-		memcpy(raw_key, key.c_str(), FEISTEL_BLOCK);
-	}
-	else {
-		memcpy(raw_key, key.c_str(), key.length());
-	}
-
 	//Initialisation Vector
 	memset(blockXOR, 0x02, CHAIN_BLOCK);
 
-	unsigned int current_pos = 0;
-	while (current_pos < message.length()) {
-		//initialise chaque octects du block d'entr�e a 0
-		memset(blockInput, 0, CHAIN_BLOCK);
+	unsigned block_count = message.length() / CHAIN_BLOCK;
+	unsigned residue = message.length() % CHAIN_BLOCK;
 
-		if (message.length() - current_pos < CHAIN_BLOCK) {
-			bytes = message.length() - current_pos;
+	for (unsigned i = 0; i <= block_count; i++) {
+
+		if (i == block_count) {
+
+			if (!residue) {
+				memset(blockInput, CHAIN_BLOCK, CHAIN_BLOCK);
+			}
+			else {
+				memset(blockInput, CHAIN_BLOCK - residue, CHAIN_BLOCK);
+				bytes = residue;
+				//copie n bytes a partir du message dans le bloc d'entr�e
+				memcpy(blockInput, &message.c_str()[i * CHAIN_BLOCK], bytes);
+			}
 		}
 		else {
+			//initialise chaque octects du block d'entr�e a 0
+			memset(blockInput, 0, CHAIN_BLOCK);
 			bytes = CHAIN_BLOCK;
+			//copie n bytes a partir du message dans le bloc d'entr�e
+			memcpy(blockInput, &message.c_str()[i * CHAIN_BLOCK], bytes);
 		}
 
-		//copie n bytes a partir message dans le bloc d'entr�e
-		memcpy(blockInput, &message.c_str()[current_pos], bytes);
-		current_pos += bytes;
-
+		
 		//xor avec entr�e pr�c�dente
 		for (unsigned i = 0; i < CHAIN_BLOCK; i++) {
 			blockInput[i] ^= blockXOR[i];
 		}
 
 		//passe le bloc par le reseau de Feistel
-		reseauFeistel(blockInput, raw_key, FEISTEL_TURN);
+		reseauFeistel(blockInput, key, FEISTEL_TURN);
 
 		//ajoute l'entr�e crypt� au cryptogramme
 		cryptogram.append(reinterpret_cast<const char*>(blockInput), CHAIN_BLOCK);
 		//l'entr�e crypt� sera utilis� pour le prochain xor
 		memcpy(blockXOR, blockInput, CHAIN_BLOCK);
 	}
-
+	
 	return cryptogram;
 }
 
@@ -97,42 +96,24 @@ string cbcDecrypt(const string& message, const string& key)
 	unsigned int bytes;
 	string cryptogram = "";
 
-	//pour s'assurer que la taille de la cl� == taille d'un bloc,
-	//la tronque si tros grosse, la complete avec des 0 si tros petite.
-	unsigned char raw_key[FEISTEL_BLOCK];
-	memset(raw_key, 0, FEISTEL_BLOCK);
-	if (key.length() > FEISTEL_BLOCK) {
-		memcpy(raw_key, key.c_str(), FEISTEL_BLOCK);
-	}
-	else {
-		memcpy(raw_key, key.c_str(), key.length());
-	}
-
 	//Initialisation Vector
 	memset(blockXOR, 0x02, CHAIN_BLOCK);
 
-	unsigned int current_pos = 0;
-	while (current_pos < message.length()) {
+	unsigned block_count = message.length() / CHAIN_BLOCK;
+	for (unsigned i = 0; i < block_count; i++) {
+
 		//initialise chaque octects du block d'entr�e a 0
 		memset(blockInput, 0, CHAIN_BLOCK);
-
-		if (message.length() - current_pos < CHAIN_BLOCK) {
-			bytes = message.length() - current_pos;
-		}
-		else {
-			bytes = CHAIN_BLOCK;
-		}
-
-		//copie n bytes a partir message dans le bloc d'entr�e
-		memcpy(blockInput, &message.c_str()[current_pos], bytes);
-		current_pos += bytes;
+		bytes = CHAIN_BLOCK;
+		//copie n bytes a partir du message dans le bloc d'entr�e
+		memcpy(blockInput, &message.c_str()[i * CHAIN_BLOCK], bytes);
+	
 
 		//garde une copie du message crypt�, IV pour le prochain
 		memcpy(cpyInput, blockInput, CHAIN_BLOCK);
 
-
 		//passe le bloc par le reseau de Feistel
-		reseauFeistel(blockInput, raw_key, FEISTEL_TURN);
+		reseauFeistel(blockInput, key, FEISTEL_TURN);
 
 		//xor avec entr�e pr�c�dente
 		for (unsigned i = 0; i < CHAIN_BLOCK; i++) {
@@ -144,15 +125,26 @@ string cbcDecrypt(const string& message, const string& key)
 		//l'entr�e crypt� sera utilis� pour le prochain xor
 		memcpy(blockXOR, cpyInput, CHAIN_BLOCK);
 	}
-
-	return cryptogram;
+	//Le cryptogram contient les octets de "padding" utilise lors de l'encryption. Cette
+	//operation retranche ces octets.
+	return cryptogram.substr(0, cryptogram.length() - int(cryptogram.back()));
 }
 
-void reseauFeistel(unsigned char* blockInput, unsigned char* raw_key, unsigned turn_count)
+void reseauFeistel(unsigned char* blockInput, const string& key, unsigned turn_count)
 {
 
 	unsigned char blockL[FEISTEL_BLOCK];
 	unsigned char blockR[FEISTEL_BLOCK];
+	unsigned char raw_key[FEISTEL_BLOCK];
+
+	//Pour s'assurer d'avoir une clé de la taille d'un bloc
+	memset(raw_key, 0, FEISTEL_BLOCK);
+	if (key.length() > FEISTEL_BLOCK) {
+		memcpy(raw_key, key.c_str(), FEISTEL_BLOCK);
+	}
+	else {
+		memcpy(raw_key, key.c_str(), key.length());
+	}
 
 	//commence les tours de Feistel en utilisant le block d'entr�e
 	for (unsigned i = 0; i < turn_count; i++) {
@@ -187,10 +179,10 @@ string vigenere(const unsigned char* block, const unsigned char* key,
 	unsigned lenght
 ) {
 	static char tableauVigenere[256][256];
-	static bool iter = false;
+	static bool first_iter = true;
 
-	if (!iter) {
-		iter = true;
+	if (first_iter) {
+		first_iter = false;
 		int i;
 		int j;
 		char caractere = -128;
@@ -207,7 +199,6 @@ string vigenere(const unsigned char* block, const unsigned char* key,
 			caractere++;
 		}
 	}
-
 
 	string combined_block(lenght, 'x');
 
@@ -275,7 +266,7 @@ string useSBox(const string& msg, unsigned int len) {
 		bit8 += Sbox[msg64[i + 1]];
 		crypto_block[i / 2] = static_cast<char>(bit8);
 	}
-	return crypto_block;
+	return base64_decode(crypto_block);
 }
 
 //-----------------------------/----------------------------------------/
@@ -289,7 +280,7 @@ void rotate_r(unsigned char *object, size_t size);
 string simpleHash(const string& message);
 string simpleHMCA(const string& message, const string& key);
 
-#define BLOCK_SIZE 128	//octets (ou chars)
+#define BLOCK_SIZE 64	//octets (ou chars)
 
 //Interface
 string generateMac(const string& message, const string& key) {
@@ -297,10 +288,18 @@ string generateMac(const string& message, const string& key) {
 }
 
 bool verifyMAC(const string& str, const string& key) {
-	string the_msg = str.substr(0, str.length() - BLOCK_SIZE);
-	string the_MAC = str.substr(str.length() - BLOCK_SIZE, BLOCK_SIZE);
+	try
+	{
+		string the_msg = str.substr(0, str.length() - BLOCK_SIZE);
+		string the_MAC = str.substr(str.length() - BLOCK_SIZE, BLOCK_SIZE);
 
-	return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
+		return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
+	}
+	catch (const std::out_of_range& e)
+	{
+		cout << endl << e.what();
+		return false;
+	}
 }
 
 string extractMsg(const string& str) {

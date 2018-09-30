@@ -1,0 +1,1 @@
+start cmd /k "%~dp0Debug/Clement.exe 8812"

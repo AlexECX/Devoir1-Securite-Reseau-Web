@@ -16,6 +16,7 @@ using namespace std;
 
 void runClient(short nPort, const char* host);
 void scriptedConvo(SimpleSocket client);
+void scriptedConvoTest(SimpleSocket client);
 void initialisationTableauVigenere(char[256][256]);
 void affichageTableauVigenere(char[256][256]);
 string ouvertureFichierEnregistrementString(string);
@@ -60,9 +61,9 @@ int main(int argc, char **argv)
 
 void runClient(short nPort, const char * host)
 {
+
 	try
 	{
-		string transit = "";
 		bool connected = false;
 		SimpleSocket client = SimpleSocket();
 
@@ -73,21 +74,65 @@ void runClient(short nPort, const char * host)
 				client.connectSocket(host, nPort);
 				connected = true;
 			}
-			catch (const ConnectionException e)
+			catch (const ConnectionException& e)
 			{
 				cout << endl << e.what();
 				this_thread::sleep_for(5s);
 			}
 		}
 
-		scriptedConvo(client);
+		scriptedConvoTest(client);
 
 		}
-	catch (const ConnectionException e)
+	catch (const ConnectionException& e)
 	{
 		cout << endl << e.what();
 	}
 	
+
+}
+
+void scriptedConvoTest(SimpleSocket client) {
+	string transit = "";
+	string agnesse_key = "gadgettegdag";
+	string message = "";
+	string mac = "";
+
+	//Input
+	cout << "\nQuel est le message d'Agnesse?" << endl;
+	getline(cin, message);
+	cout << endl;
+	cout << "Message a etre transmit (clair) a Clement pour Bob: \n";
+	cout << "\"" << message << "\"" << endl << endl;
+
+	//Encryption
+	message = encrypt(message, agnesse_key);
+	cout << endl;
+	cout << "\nMessage a etre transmit (crypt) a Clement pour Bob: \n\n";
+	cout << "\"" << message << "\"" << endl << endl;
+
+	//MAC
+	mac = generateMac(message, agnesse_key);
+	cout << endl;
+	cout << "\nCode MAC\n\n";
+	cout << mac << endl << endl;
+
+	//Envoie du message
+	client.sendMessage(message + mac);
+	cout << "\nwaiting for Bob" << endl;
+
+	//Réception
+	client.recvMessage(message);
+	cout << "Message crypte recu de Clement (provenance Bob)\n" << endl;
+	cout << "\"" << message << "\"" << endl << endl;
+	cout << "\nthe verifyMAC result is: "
+		<< (verifyMAC(message, agnesse_key) == true ? "True" : "False")
+		<< endl << endl;
+
+	//Désencryption
+	message = decrypt(extractMsg(message), agnesse_key);
+	cout << "Message clair recu de Clement (provenance Bob)\n" << endl;
+	cout << "\"" << message << "\"" << endl << endl;
 
 }
 

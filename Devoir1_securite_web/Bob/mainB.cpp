@@ -6,8 +6,7 @@
 #include "ConnectionException.h"
 #include "Utils.h"
 #include "SimpleSocket.h"
-#include <map>
-#include <bitset>
+#include "encryption.h"
 
 using namespace std;
 
@@ -17,6 +16,7 @@ using namespace std;
 
 void runClient(short nPort, const char* host);
 void scriptedConvo(SimpleSocket client, string& transit);
+void scriptedConvoTest(SimpleSocket client);
 void initialisationTableauVigenere(char[256][256]);
 void affichageTableauVigenere(char[256][256]);
 string ouvertureFichierEnregistrementString(string);
@@ -75,7 +75,7 @@ void runClient(short nPort, const char * host)
 				client.connectSocket(host, nPort);
 				connected = true;
 			}
-			catch (const ConnectionException e)
+			catch (const ConnectionException& e)
 			{
 				cout << endl << e.what();
 				this_thread::sleep_for(5s);
@@ -83,13 +83,50 @@ void runClient(short nPort, const char * host)
 
 		}
 		
-		scriptedConvo(client, transit);
+		scriptedConvoTest(client);
 	}
-	catch (const ConnectionException e)
+	catch (const ConnectionException& e)
 	{
 		cout << endl << e.what();
 	}
 	
+
+}
+
+void scriptedConvoTest(SimpleSocket client) {
+	string bob_key = "bobinoonibob";
+	string message = "";
+	string mac = "";
+
+	//Réception
+	cout << "\nwaiting for Agnesse";
+	client.recvMessage(message);
+	cout << "\n\nMessage recu (crypted)de Clement provenance Agnesse:\n";
+	cout << "\"" << message << "\"" << endl << endl;
+
+	//Désencryption
+	cout << "\nMessage clair recu de Clement (provenance Agnesse)\n\n" << endl;
+	cout << "\"" << decrypt(extractMsg(message), bob_key) << "\"" << endl;
+
+	//Vérif MAC
+	cout << "\nthe verifyMAC result is: "
+		<< (verifyMAC(message, bob_key) == true ? "True" : "False");
+
+	//Message de Bob pour Agnesse
+	cout << "\n\nQuel est le message de Bob?" << endl;
+	getline(cin, message);
+	cout << endl << endl;
+	cout << "Message a etre transmit (clair) a Clement pour Agnesse: \n";
+	cout << "\"" << message << "\"" << endl << endl;
+
+	//Encryption
+	message = encrypt(message, bob_key);
+
+	//Envoie du message
+	cout << endl << endl;
+	cout << "\nMessage a etre transmit (crypt) a Clement pour Agnesse: \n\n";
+	cout << "\"" << message << "\"" << endl << endl;
+	client.sendMessage(message + generateMac(message, bob_key));
 
 }
 

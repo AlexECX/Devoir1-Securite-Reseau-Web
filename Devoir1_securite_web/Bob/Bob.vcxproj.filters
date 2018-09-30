@@ -15,9 +15,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\Connection\Utils.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
@@ -34,6 +31,9 @@
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="..\Connection\encryption.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="mainB.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
