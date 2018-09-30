@@ -33,6 +33,12 @@
     <ClInclude Include="..\Connection\base64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\Connection\encryption.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Connection\hashing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Connection\Utils.cpp">
@@ -54,6 +60,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\Connection\base64.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Connection\encryption.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Connection\hashing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

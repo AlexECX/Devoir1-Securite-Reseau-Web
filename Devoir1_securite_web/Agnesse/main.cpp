@@ -6,6 +6,7 @@
 #include "ConnectionException.h"
 #include "Utils.h"
 #include "SimpleSocket.h"
+#include "encryption.h"
 
 using namespace std;
 
@@ -14,7 +15,7 @@ using namespace std;
 #define PORT 2030
 
 void runClient(short nPort, const char* host);
-void scriptedConvo(SimpleSocket client, string& transit);
+void scriptedConvo(SimpleSocket client);
 void initialisationTableauVigenere(char[256][256]);
 void affichageTableauVigenere(char[256][256]);
 string ouvertureFichierEnregistrementString(string);
@@ -59,7 +60,6 @@ int main(int argc, char **argv)
 
 void runClient(short nPort, const char * host)
 {
-	
 	try
 	{
 		string transit = "";
@@ -80,7 +80,7 @@ void runClient(short nPort, const char * host)
 			}
 		}
 
-		scriptedConvo(client, transit);
+		scriptedConvo(client);
 
 		}
 	catch (const ConnectionException e)
@@ -91,9 +91,10 @@ void runClient(short nPort, const char * host)
 
 }
 
-void scriptedConvo(SimpleSocket client, string& transit) {
+void scriptedConvo(SimpleSocket client) {
 	
 	//Variables
+	string transit;
 	string agnesse_key = "gadgettegdag";
 	string cryptogram = "";
 	string message = "";
