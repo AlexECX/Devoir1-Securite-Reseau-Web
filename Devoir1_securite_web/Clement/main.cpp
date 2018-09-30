@@ -6,6 +6,7 @@
 #include "ConnectionException.h"
 #include "SimpleServerSocket.h"
 #include "Utils.h"
+#include "encryption.h"
 
 using namespace std;
 

@@ -6,6 +6,7 @@
 #include "ConnectionException.h"
 #include "Utils.h"
 #include "SimpleSocket.h"
+#include "encryption.h"
 
 using namespace std;
 
@@ -90,7 +91,7 @@ void scriptedConvo(SimpleSocket client, string& transit) {
 	string mac = "";
 
 	/**/
-	message = "Hello from Agnesse";
+	message = "Hello from Agnesse Hello from Agnesse Hello from Agnesse";
 	cout << "\nsending \"" << message << "\" to Bob";
 	message = encrypt(message, agnesse_key);
 	cout << "\nsending \"" << message << "\" to Bob";

@@ -6,8 +6,7 @@
 #include "ConnectionException.h"
 #include "Utils.h"
 #include "SimpleSocket.h"
-#include <map>
-#include <bitset>
+#include "encryption.h"
 
 using namespace std;
 
