@@ -1,6 +1,7 @@
 #include "SimpleServerSocket.h"
 #include "ConnectionException.h"
 #include <string>
+#include <iostream>
 
 
 using namespace std;

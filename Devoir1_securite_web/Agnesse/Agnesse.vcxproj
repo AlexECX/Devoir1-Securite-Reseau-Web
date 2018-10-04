@@ -70,7 +70,7 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <IncludePath>..\Connection;$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -120,21 +120,23 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\Connection\base64.cpp" />
     <ClCompile Include="..\Connection\Connection.cpp" />
     <ClCompile Include="..\Connection\ConnectionException.cpp" />
-    <ClCompile Include="..\Connection\encryption.cpp" />
+    <ClCompile Include="..\Connection\SimpleServerSocket.cpp" />
     <ClCompile Include="..\Connection\SimpleSocket.cpp" />
     <ClCompile Include="..\Connection\Utils.cpp" />
+    <ClCompile Include="..\Encryption\base64.cpp" />
+    <ClCompile Include="..\Encryption\encryption.cpp" />
     <ClCompile Include="mainA.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Connection\base64.h" />
     <ClInclude Include="..\Connection\Connection.h" />
     <ClInclude Include="..\Connection\ConnectionException.h" />
-    <ClInclude Include="..\Connection\encryption.h" />
+    <ClInclude Include="..\Connection\SimpleServerSocket.h" />
     <ClInclude Include="..\Connection\SimpleSocket.h" />
     <ClInclude Include="..\Connection\Utils.h" />
+    <ClInclude Include="..\Encryption\base64.h" />
+    <ClInclude Include="..\Encryption\encryption.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

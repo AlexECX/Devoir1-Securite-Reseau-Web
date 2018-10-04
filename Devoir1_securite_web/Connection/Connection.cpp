@@ -2,9 +2,8 @@
 #include "ConnectionException.h"
 #include <sstream>
 #include <string>
-// Helper macro for displaying errors
-#define PRINTERROR(s)	std::cout<<"\n"<<s<<":"<<WSAGetLastError()
-
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 
@@ -202,10 +201,10 @@ int Connection::recvFile(std::string FilePath) {
 	return 1;
 }
 
-bool Connection::sendMessage(string file) {
+bool Connection::sendMessage(const string &message) {
 	int nRet = 0;
-	unsigned int file_size = file.size();
-	const char* send_file = file.c_str();
+	unsigned int file_size = message.size();
+	const char* send_file = message.c_str();
 	unsigned int offset = 0;
 
 	while (offset < sizeof(unsigned int)) {
@@ -255,7 +254,7 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 	unsigned int Msg_size = 0;
 	unsigned int file_size = 0;
 	unsigned int offset = 0;
-	char* reception;
+	char* reception = nullptr;
 
 	while (offset < sizeof(unsigned int)) {
 		nRet = recv(mySocket, (char*)&Msg_size + offset,                                        
@@ -275,17 +274,9 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 		return false;
 	}
 
-	reception = nullptr;
-
-	try {
-		reception = new char[file_size]; //std::bad_alloc exception here
-	}
-	catch (std::bad_alloc ex) {
-		cout << ex.what();
-	}
+	reception = new char[file_size]; //std::bad_alloc exception here?
 	
 	unsigned int ReceivedBytes = 0;
-
 	// If the file is bigger than "X amount", will send in multiple packages
 	while (ReceivedBytes < file_size) {
 			
@@ -312,56 +303,5 @@ bool Connection::recvMessage(string &message, bool show_progress) {
 	}
 	message = string(reception, file_size);
 	delete[] reception;
-	return true;
-}
-
-bool Connection::sendFileRequest(string file_name) {
-	unsigned int Msg_size = file_name.length();
-
-	int Recpt;
-	Recpt = send(mySocket,                   // Connected socket
-		(char*)&Msg_size,                             // Data buffer
-		sizeof(unsigned int),               // Buffer length
-		0);                                // Flags
-	if (Recpt == SOCKET_ERROR) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
-	}
-
-	Recpt = send(mySocket,                   // Connected socket
-		file_name.c_str(),                             // Data buffer
-		Msg_size,               // Buffer length
-		0);                                // Flags
-	if (Recpt == SOCKET_ERROR) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
-	}
-	return true;
-}
-
-bool Connection::recvFileRequest(char* &buffer, unsigned int &buffer_size) {
-	unsigned int Msg_size;
-	int Recpt;
-
-	Recpt = recv(mySocket,                            // Connected client
-		(char*)&Msg_size,                                         // Receive buffer
-		sizeof(unsigned int),                           // Buffer length
-		0);                                            // Flags
-
-	if (Recpt == INVALID_SOCKET) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
-	}
-
-	buffer_size = Msg_size;
-	buffer = new char[buffer_size];
-
-
-	//memset(szBuf, 0, sizeof(szBuf));
-	Recpt = recv(mySocket,                            // Connected client
-		buffer,                                         // Receive buffer
-		buffer_size,                           // Buffer length
-		0);                                            // Flags
-	if (Recpt == INVALID_SOCKET) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
-	}
-
 	return true;
 }

@@ -18,7 +18,7 @@ string useSBox(const string& uc_msg, unsigned int len);
 #define CHAIN_BLOCK 16	//octets (ou chars)
 #define FEISTEL_BLOCK CHAIN_BLOCK / 2
 #define FEISTEL_TURN 16
-#define ALGO xorSbox
+#define ALGO vigenere
 
 //Interface
 string encrypt(const string& message, const string& key) {
@@ -315,19 +315,22 @@ string extractMsg(const string& str) {
 //suivit d'un XOR avec le code de hashage (initialis� � 0).
 string simpleHash(const string& message) {
 
-	unsigned char* raw_message = (unsigned char*)message.c_str();
 	unsigned char block[BLOCK_SIZE];
-	unsigned char result[BLOCK_SIZE];
-	memset(result, 0, BLOCK_SIZE); //initialise chaque octects a 0
+	string result(BLOCK_SIZE, '\0'); //initialise chaque octects a 0
+	unsigned int bytes;
 
 	unsigned int current_pos = 0;
-	unsigned int len = message.length();
-	while (current_pos < len)
+	while (current_pos < message.length())
 	{
 		memset(block, 0, BLOCK_SIZE);
-		unsigned int bytes = len - current_pos < BLOCK_SIZE ? len - current_pos : BLOCK_SIZE;
+		if (message.length() - current_pos < BLOCK_SIZE){
+			bytes = message.length() - current_pos;
+		}
+		else {
+			bytes = BLOCK_SIZE;
+		}
 		//copie n bytes a partir de raw_message[] dans le bloc
-		memcpy(block, &raw_message[current_pos], bytes);
+		memcpy(block, &message.c_str()[current_pos], bytes);
 		current_pos += bytes;
 
 		rotate_l(block, BLOCK_SIZE); //<-internet code
@@ -337,8 +340,7 @@ string simpleHash(const string& message) {
 		}
 
 	}
-	string str((char*)result, BLOCK_SIZE);
-	return str;
+	return result;
 }
 
 //Implementation d'un HMAC
@@ -353,21 +355,20 @@ string simpleHMCA(const string& message, const string& key) {
 		memcpy(key_plus, key.c_str(), BLOCK_SIZE);
 	}
 
-	unsigned char Si[BLOCK_SIZE];
-	memset(Si, 0, BLOCK_SIZE);
+	string Si(BLOCK_SIZE, '\0');
 	for (unsigned i = 0; i < BLOCK_SIZE; i++) {
 		Si[i] = key_plus[i] ^ 0x36;
 	}
 
-	string str_out = simpleHash(string((char*)Si, BLOCK_SIZE) + message);
+	string str_out = simpleHash(Si + message);
 
-	memset(Si, 0, BLOCK_SIZE);
+	Si.assign(BLOCK_SIZE, '\0');
 
 	for (unsigned i = 0; i < BLOCK_SIZE; i++) {
 		Si[i] = key_plus[i] ^ 0x5C;
 	}
 
-	str_out = simpleHash(string((char*)Si, BLOCK_SIZE) + str_out);
+	str_out = simpleHash(Si + str_out);
 
 	return str_out;
 }
