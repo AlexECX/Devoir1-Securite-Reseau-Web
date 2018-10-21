@@ -84,10 +84,37 @@ void runClient(short nPort, const char * host)
 }
 
 void scriptedConvoTest(SimpleSocket client) {
-	string transit = "";
-	string agnesse_key = "gadgettegdag";
+	string crypt_key_A = "gadgettegdag";
+	string mac_key_A = "mac_key_A";
 	string message = "";
 	string mac = "";
+
+	//S'identifie aupres de Clement
+
+	message = "is Agnesse";
+	client.sendMessage(message + generateMac(message, mac_key_A));
+	client.recvMessage(message);
+	if (!authenticate(message, "is Clement", mac_key_A))
+	{
+		cout << "\nsender is not Clement";
+		return;
+	}
+
+	//Recois clé de session et MAC
+	client.recvMessage(message);
+	if (!verifyMAC(message, mac_key_A)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	crypt_key_A = decrypt(extractMsg(message), crypt_key_A);
+
+	client.recvMessage(message);
+	if (!verifyMAC(message, mac_key_A)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	mac_key_A = decrypt(extractMsg(message), crypt_key_A);
+
 
 	//Input
 	cout << "\nQuel est le message d'Agnesse?" << endl;
@@ -97,13 +124,13 @@ void scriptedConvoTest(SimpleSocket client) {
 	cout << "\"" << message << "\"" << endl << endl;
 
 	//Encryption
-	message = encrypt(message, agnesse_key);
+	message = encrypt(message, crypt_key_A);
 	cout << endl;
 	cout << "\nMessage a etre transmit (crypt) a Clement pour Bob: \n\n";
 	cout << "\"" << message << "\"" << endl << endl;
 
 	//MAC
-	mac = generateMac(message, agnesse_key);
+	mac = generateMac(message, mac_key_A);
 	cout << endl;
 	cout << "\nCode MAC\n\n";
 	cout << mac << endl << endl;
@@ -117,11 +144,11 @@ void scriptedConvoTest(SimpleSocket client) {
 	cout << "Message crypte recu de Clement (provenance Bob)\n" << endl;
 	cout << "\"" << message << "\"" << endl << endl;
 	cout << "\nthe verifyMAC result is: "
-		<< (verifyMAC(message, agnesse_key) == true ? "True" : "False")
+		<< (verifyMAC(message, mac_key_A) == true ? "True" : "False")
 		<< endl << endl;
 
 	//D�sencryption
-	message = decrypt(extractMsg(message), agnesse_key);
+	message = decrypt(extractMsg(message), crypt_key_A);
 	cout << "Message clair recu de Clement (provenance Bob)\n" << endl;
 	cout << "\"" << message << "\"" << endl << endl;
 

@@ -55,7 +55,6 @@ void runClient(short nPort, const char * host)
 {
 	try
 	{
-		string transit = "";
 		bool connected = false;
 		SimpleSocket client = SimpleSocket();
 
@@ -85,9 +84,35 @@ void runClient(short nPort, const char * host)
 }
 
 void scriptedConvoTest(SimpleSocket client) {
-	string bob_key = "bobinoonibob";
+	string crypt_key_B = "bobinoonibob";
+	string mac_key_B = "mac_key_B";
 	string message = "";
 	string mac = "";
+
+	//S'identifie aupres de Clement
+	message = "is Bob";
+	client.sendMessage(message + generateMac(message, mac_key_B));
+	client.recvMessage(message);
+	if (!authenticate(message, "is Clement", mac_key_B))
+	{
+		cout << "\nsender is not Clement";
+		return;
+	}
+
+	//Recois clé de session et MAC
+	client.recvMessage(message);
+	if (!verifyMAC(message, mac_key_B)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	crypt_key_B = decrypt(extractMsg(message), crypt_key_B);
+
+	client.recvMessage(message);
+	if (!verifyMAC(message, mac_key_B)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	mac_key_B = decrypt(extractMsg(message), crypt_key_B);
 
 	//R�ception
 	cout << "\nwaiting for Agnesse";
@@ -97,26 +122,37 @@ void scriptedConvoTest(SimpleSocket client) {
 
 	//D�sencryption
 	cout << "\nMessage clair recu de Clement (provenance Agnesse)\n\n" << endl;
-	cout << "\"" << decrypt(extractMsg(message), bob_key) << "\"" << endl;
+	cout << "\"" << decrypt(extractMsg(message), crypt_key_B) << "\"" << endl;
 
 	//V�rif MAC
+	bool verify = verifyMAC(message, mac_key_B);
 	cout << "\nthe verifyMAC result is: "
-		<< (verifyMAC(message, bob_key) == true ? "True" : "False");
+		<< (verify == true ? "True" : "False");
 
-	//Message de Bob pour Agnesse
-	cout << "\n\nQuel est le message de Bob?" << endl;
-	getline(cin, message);
-	cout << endl << endl;
-	cout << "Message a etre transmit (clair) a Clement pour Agnesse: \n";
-	cout << "\"" << message << "\"" << endl << endl;
+	if (verify) {
+		//Message de Bob pour Agnesse
+		cout << "\n\nQuel est le message de Bob?" << endl;
+		getline(cin, message);
+		cout << endl << endl;
+		cout << "Message a etre transmit (clair) a Clement pour Agnesse: \n";
+		cout << "\"" << message << "\"" << endl << endl;
 
-	//Encryption
-	message = encrypt(message, bob_key);
+		//Encryption
+		message = encrypt(message, crypt_key_B);
 
-	//Envoie du message
-	cout << endl << endl;
-	cout << "\nMessage a etre transmit (crypt) a Clement pour Agnesse: \n\n";
-	cout << "\"" << message << "\"" << endl << endl;
-	client.sendMessage(message + generateMac(message, bob_key));
+		//Envoie du message
+		cout << endl << endl;
+		cout << "\nMessage a etre transmit (crypt) a Clement pour Agnesse: \n\n";
+		cout << "\"" << message << "\"" << endl << endl;
+		client.sendMessage(message + generateMac(message, mac_key_B));
+	}
+	else {
+		cout << endl << "Clement MAC incorrect";
+		//Envoie erreurs
+		message = encrypt("Clement MAC incorrect", crypt_key_B);
+		client.sendMessage(message + generateMac(message, mac_key_B));
+	}
+
+	
 
 }

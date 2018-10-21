@@ -1,6 +1,8 @@
 #pragma once
 #include <winsock.h>
 #include <string>
+#include "SocketWrap.h"
+#include "ConnectionException.h"
 
 #define WSA_ERROR "Winsock error "+std::to_string(WSAGetLastError())
 
@@ -9,10 +11,9 @@ class Connection
 {
 private:
 
-	bool autoClose = true;
-
 protected:
 	
+	std::shared_ptr<SocketWrap> mySocket_ptr = nullptr;
 	SOCKET		mySocket;
 	SOCKADDR_IN saServer;
 	
@@ -20,13 +21,14 @@ protected:
 public:
 	
 	Connection();
-	Connection(SOCKET socket);
+	Connection(const SOCKET& socket);
 
 	virtual ~Connection();
 
-	void operator=(Connection& other) {
-		mySocket = other.mySocket;
-		other.autoClose = false;
+	Connection& operator=(const Connection& other) {
+		mySocket_ptr = other.mySocket_ptr;
+		mySocket = mySocket_ptr->getTheSocket();
+		return *this;
 	}
 
 	void close();
@@ -42,7 +44,7 @@ public:
 
 	//permet de recevoir un fichier. Si trop grand,
 	//est pret a recevoir en plusieurs paquets.
-	bool recvMessage(std::string &message, bool show_progress=false);
+	bool recvMessage(std::string &message);
 
 
 };

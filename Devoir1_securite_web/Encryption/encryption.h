@@ -1,5 +1,8 @@
 #include <string>
 
+bool authenticate(std::string msg, std::string name, std::string mac_key);
+
+std::string generateKey(unsigned size);
 
 std::string encrypt(const std::string&, const std::string&);
 

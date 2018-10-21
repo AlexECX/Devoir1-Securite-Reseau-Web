@@ -10,6 +10,11 @@ public:
 	SimpleServerSocket(short cPort);
 	virtual ~SimpleServerSocket();
 
+	SimpleServerSocket& operator=(SimpleServerSocket& other) {
+		Connection::operator = (other);
+		return *this;
+	}
+
 	void bindSocket(const char * szServer, short cPort);
 
 	SimpleSocket acceptSocket();

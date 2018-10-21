@@ -1,6 +1,8 @@
 #pragma once
 #include <iostream>
 #include <map>
+#include <random>
+#include <functional>
 #include "encryption.h"
 #include "base64.h"
 
@@ -11,9 +13,9 @@ using namespace std;
 string cbcEncrypt(const string& message, const string& key);
 string cbcDecrypt(const string& message, const string& key);
 void reseauFeistel(unsigned char* blockInput, const string& key, unsigned turn_count);
-string vigenere(const unsigned char*, const unsigned char*, unsigned);
-string xorSbox(const unsigned char*, const unsigned char*, unsigned);
-string useSBox(const string& uc_msg, unsigned int len);
+void vigenere(unsigned char*, const unsigned char*, unsigned);
+void xorSbox(unsigned char*, const unsigned char*, unsigned);
+void useSBox(unsigned char* msg, unsigned int len);
 
 #define CHAIN_BLOCK 16	//octets (ou chars)
 #define FEISTEL_BLOCK CHAIN_BLOCK / 2
@@ -21,6 +23,22 @@ string useSBox(const string& uc_msg, unsigned int len);
 #define ALGO vigenere
 
 //Interface
+string generateKey(unsigned size)
+{
+	std::default_random_engine generator;
+	std::uniform_int_distribution<int> distribution(0, 1000);
+	auto init = std::bind(distribution, generator);
+
+	string key(init(), size);
+	for (size_t i = 0; i < size; i++)
+	{
+		key[i] ^= init();
+	}
+
+	return key;
+}
+
+
 string encrypt(const string& message, const string& key) {
 	return cbcEncrypt(message, key);
 }
@@ -153,15 +171,11 @@ void reseauFeistel(unsigned char* blockInput, const string& key, unsigned turn_c
 
 	//commence les tours de Feistel en utilisant le block d'entr�e
 	for (unsigned i = 0; i < turn_count; i++) {
-		memset(blockL, 0, FEISTEL_BLOCK);
-		memset(blockR, 0, FEISTEL_BLOCK);
 		memcpy(blockL, blockInput, FEISTEL_BLOCK);
 		memcpy(blockR, &blockInput[FEISTEL_BLOCK], FEISTEL_BLOCK);
 
 		//R goes thru the F function
-		string tmp = ALGO(blockR, raw_key, FEISTEL_BLOCK);
-		memset(blockR, 0, FEISTEL_BLOCK);
-		memcpy(blockR, tmp.c_str(), tmp.length());
+		ALGO(blockR, raw_key, FEISTEL_BLOCK);
 
 		//unaltered R block becomes the next L block
 		memcpy(blockInput, &blockInput[FEISTEL_BLOCK], FEISTEL_BLOCK);
@@ -180,9 +194,9 @@ void reseauFeistel(unsigned char* blockInput, const string& key, unsigned turn_c
 }
 
 
-string vigenere(const unsigned char* block, const unsigned char* key,
-	unsigned lenght
-) {
+void vigenere(unsigned char* block, const unsigned char* key,
+		  unsigned lenght)
+{
 	static char tableauVigenere[256][256];
 	static bool first_iter = true;
 
@@ -205,33 +219,30 @@ string vigenere(const unsigned char* block, const unsigned char* key,
 		}
 	}
 
-	string combined_block(lenght, 'x');
-
 	for (unsigned i = 0; i < lenght; i++) {
-		combined_block[i] = tableauVigenere[block[i]][key[i]];
+		block[i] = tableauVigenere[block[i]][key[i]];
 	}
 
-	return combined_block;
+	return;
 
 }
 
-string xorSbox(const unsigned char* block, const unsigned char* key,
+void xorSbox(unsigned char* block, const unsigned char* key,
 						unsigned lenght) 
 {
-	string combined_block(lenght, 'x');
-
 	//xor le bloc avec la cl�
 	for (unsigned i = 0; i < lenght; i++) {
-		combined_block[i] = block[i] ^ key[i];
+		block[i] = block[i] ^ key[i];
 	}
 
-	return useSBox(combined_block, lenght);
+	useSBox(block, lenght);
+	return;
 	//return string(reinterpret_cast<const char*>(message), lenght);
 
 }
 
 
-string useSBox(const string& msg, unsigned int len) {
+void useSBox(unsigned char* msg, unsigned int len) {
 
 	//Bas� sur une S-box de DES. Prend en entr�e un char en base 64, qui repr�sente
 	//un 6 bits, et le map a la valeur de 4 bits correspondante de la S-Box.
@@ -259,10 +270,7 @@ string useSBox(const string& msg, unsigned int len) {
 			{'=', 0x00},
 	};
 
-	const unsigned char* uc_msg;
-	uc_msg = reinterpret_cast<const unsigned char*>(msg.c_str());
-
-	string msg64 = base64_encode(uc_msg, len); //<-internet code
+	string msg64 = base64_encode(msg, len); //<-internet code
 
 	string crypto_block(msg64.length() / 2, 'x');
 	unsigned long long bit8;
@@ -271,7 +279,8 @@ string useSBox(const string& msg, unsigned int len) {
 		bit8 += Sbox[msg64[i + 1]];
 		crypto_block[i / 2] = static_cast<char>(bit8);
 	}
-	return base64_decode(crypto_block);
+	memcpy(msg, base64_decode(crypto_block).c_str(), //<-internet code
+			len); 
 }
 
 //-----------------------------/----------------------------------------/
@@ -285,9 +294,21 @@ void rotate_r(unsigned char *object, size_t size);
 string simpleHash(const string& message);
 string simpleHMCA(const string& message, const string& key);
 
-#define BLOCK_SIZE 64	//octets (ou chars)
+#define BLOCK_SIZE 32	//octets (ou chars)
 
 //Interface
+bool authenticate(string msg, string name, string mac_key)
+{
+	if (extractMsg(msg).compare(name) == 0
+		&& verifyMAC(msg, mac_key))
+	{
+		return true;
+	}
+	else {
+		return false;
+	}
+}
+
 string generateMac(const string& message, const string& key) {
 	return simpleHMCA(message, key);
 }

@@ -36,7 +36,7 @@ void SimpleSocket::connectSocket(const char * szServer, short cPort)
 		cout << endl << szServer << " is not IPv4, hostname?";
 		lpHostEntry = gethostbyname(szServer);
 		if (lpHostEntry == NULL) {
-			throw ConnectionException(string(szServer)+" invalid parameter", __FILE__, __LINE__);
+			throw ConnectionException(string(szServer)+" invalid parameter", TRACEBACK);
 		}
 		else {
 			saServer.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
@@ -47,6 +47,6 @@ void SimpleSocket::connectSocket(const char * szServer, short cPort)
 		(LPSOCKADDR)&saServer,       // Our address
 		sizeof(struct sockaddr));    // Size of address structure
 	if (nRet == SOCKET_ERROR || nRet == INVALID_SOCKET) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
+		throw ConnectionException(WSA_ERROR, TRACEBACK);
 	}
 }

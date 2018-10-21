@@ -5,10 +5,15 @@
 using namespace std;
 
 
-ConnectionException::ConnectionException(const std::string& msg, const char *file, int line) :
+ConnectionException::ConnectionException(const string & msg) :
+	std::runtime_error(msg) {
+	stream_Msg = msg;
+}
+
+ConnectionException::ConnectionException(const string& msg, const char *file, int line, string f) :
 	std::runtime_error(msg) {
 	stream_Msg = "Traceback:";
-	stream_Msg += "\n  File \"" + std::string(file) + "\", line " + std::to_string(line);
+	stream_Msg += "\n  File \"" + string(file) + "\", line " + to_string(line) + " in " + f;
 	stream_Msg += "\nConnectionException: " + msg;
 
 }

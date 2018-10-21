@@ -46,13 +46,13 @@ void SimpleServerSocket::bindSocket(const char * szServer, short cPort)
 		(LPSOCKADDR)&saServer,       // Our address
 		sizeof(struct sockaddr));    // Size of address structure
 	if (nRet == SOCKET_ERROR) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
+		throw ConnectionException(WSA_ERROR, TRACEBACK);
 	}
 
 	nRet = listen(mySocket,                          // Bound socket
 		SOMAXCONN);                            // Number of connection request queue
 	if (nRet == SOCKET_ERROR) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
+		throw ConnectionException(WSA_ERROR, TRACEBACK);
 	}
 }
 
@@ -67,7 +67,7 @@ SimpleSocket SimpleServerSocket::acceptSocket()
 		NULL,                            // Optional client address
 		NULL);
 	if (listenSocket == INVALID_SOCKET) {
-		throw ConnectionException(WSA_ERROR, __FILE__, __LINE__);
+		throw ConnectionException(WSA_ERROR, TRACEBACK);
 	}
 	else
 		std::cout << "\nConnected";
