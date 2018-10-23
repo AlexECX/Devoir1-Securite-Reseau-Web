@@ -22,7 +22,7 @@ void useSBox(unsigned char* msg, unsigned int len);
 #define FEISTEL_TURN 16
 #define ALGO vigenere
 
-//Interface
+//Interfaces
 string generateKey(unsigned size)
 {
 	std::default_random_engine generator;
@@ -296,7 +296,11 @@ string simpleHMCA(const string& message, const string& key);
 
 #define BLOCK_SIZE 32	//octets (ou chars)
 
-//Interface
+//Interfaces//
+
+//Permet de vérifier que le message est bien celui attendu et qu'il 
+//provient de la bonne personne. Utiliser pour différencer A de B lors
+//de l'assignation de SimpleSockets.
 bool authenticate(string msg, string name, string mac_key)
 {
 	if (extractMsg(msg).compare(name) == 0

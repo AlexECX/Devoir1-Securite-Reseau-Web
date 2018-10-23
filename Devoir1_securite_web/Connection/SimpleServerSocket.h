@@ -8,6 +8,7 @@ class SimpleServerSocket :
 public:
 	SimpleServerSocket();
 	SimpleServerSocket(short cPort);
+    SimpleServerSocket(const char * szServer, short cPort);
 	virtual ~SimpleServerSocket();
 
 	SimpleServerSocket& operator=(SimpleServerSocket& other) {

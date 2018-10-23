@@ -17,6 +17,11 @@ SimpleServerSocket::SimpleServerSocket(short cPort)
 	
 }
 
+SimpleServerSocket::SimpleServerSocket(const char * szServer, short cPort)
+{
+	bindSocket(szServer, cPort);
+}
+
 
 SimpleServerSocket::~SimpleServerSocket()
 {
