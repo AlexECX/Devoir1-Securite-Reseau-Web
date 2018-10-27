@@ -15,6 +15,7 @@ using namespace std;
 
 void runClient(short nPort, const char* host);
 void scriptedConvoTest(SimpleSocket client);
+void runConversationAgnesseBob(SimpleSocket clientBob, std::string, std::string);
 
 int main(int argc, char **argv)
 {
@@ -71,7 +72,7 @@ void runClient(short nPort, const char * host)
 				this_thread::sleep_for(5s);
 			}
 		}
-
+		cout << "\nConnection successful." << endl;
 		scriptedConvoTest(client);
 
 		}
@@ -84,72 +85,164 @@ void runClient(short nPort, const char * host)
 }
 
 void scriptedConvoTest(SimpleSocket client) {
-	string crypt_key_A = "gadgettegdag";
-	string mac_key_A = "mac_key_A";
+	string agnesse_key = "gadgettegdag";
+	string session_key = "";
+	string mac_key = "mac_key_A";
+	string session_mac_key = "";
 	string message = "";
 	string mac = "";
+	string bob_IP = "";
+	string bob_port = "";
 
 	//S'identifie aupres de Clement
-
 	message = "is Agnesse";
-	client.sendMessage(message + generateMac(message, mac_key_A));
+	client.sendMessage(message + generateMac(message, mac_key));
 	client.recvMessage(message);
-	if (!authenticate(message, "is Clement", mac_key_A))
+	if (!authenticate(message, "is Clement", mac_key))
 	{
 		cout << "\nsender is not Clement";
 		return;
 	}
 
-	//Recois clé de session et MAC
+	//Agnesse reçoit une question de la part de Clément
 	client.recvMessage(message);
-	if (!verifyMAC(message, mac_key_A)) {
+	if (!verifyMAC(message, mac_key)) {
 		cout << "\nsender is not Clement";
 		return;
 	}
-	crypt_key_A = decrypt(extractMsg(message), crypt_key_A);
+	message = decrypt(extractMsg(message), agnesse_key);
+	cout << "\n" << message << endl;
 
-	client.recvMessage(message);
-	if (!verifyMAC(message, mac_key_A)) {
-		cout << "\nsender is not Clement";
-		return;
-	}
-	mac_key_A = decrypt(extractMsg(message), crypt_key_A);
-
-
-	//Input
-	cout << "\nQuel est le message d'Agnesse?" << endl;
+	//Agnesse mentionne a qui elle désire parler
 	getline(cin, message);
-	cout << endl;
-	cout << "Message a etre transmit (clair) a Clement pour Bob: \n";
-	cout << "\"" << message << "\"" << endl << endl;
+	message = encrypt(message, agnesse_key);
+	client.sendMessage(message + generateMac(message, mac_key));
 
-	//Encryption
-	message = encrypt(message, crypt_key_A);
-	cout << endl;
-	cout << "\nMessage a etre transmit (crypt) a Clement pour Bob: \n\n";
-	cout << "\"" << message << "\"" << endl << endl;
-
-	//MAC
-	mac = generateMac(message, mac_key_A);
-	cout << endl;
-	cout << "\nCode MAC\n\n";
-	cout << mac << endl << endl;
-
-	//Envoie du message
-	client.sendMessage(message + mac);
-	cout << "\nwaiting for Bob" << endl;
-
-	//R�ception
+	//Attente de la réponse de Clément
+	cout << "\nEn attente de la reponse..." << endl;
 	client.recvMessage(message);
-	cout << "Message crypte recu de Clement (provenance Bob)\n" << endl;
-	cout << "\"" << message << "\"" << endl << endl;
-	cout << "\nthe verifyMAC result is: "
-		<< (verifyMAC(message, mac_key_A) == true ? "True" : "False")
-		<< endl << endl;
+	if (!verifyMAC(message, mac_key)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	message = decrypt(extractMsg(message), agnesse_key);
+	cout << "\n\n" << message << endl;
 
-	//D�sencryption
-	message = decrypt(extractMsg(message), crypt_key_A);
-	cout << "Message clair recu de Clement (provenance Bob)\n" << endl;
-	cout << "\"" << message << "\"" << endl << endl;
 
+	//Réception de la clé de session et MAC de session et infos réseau de Bob
+	cout << "\nEn attente d'une cle de session..." << endl;
+
+	client.recvMessage(message);
+	if (!verifyMAC(message, mac_key)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	session_key = decrypt(extractMsg(message), agnesse_key);
+	cout << "\nCle de session recu..." << endl;
+	cout << "Cle de session: ";
+	cout << session_key << endl;
+
+	client.recvMessage(message);
+	if (!verifyMAC(message, mac_key)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	session_mac_key = decrypt(extractMsg(message), agnesse_key);
+	cout << "\nCle de session MAC recu..." << endl;
+	cout << "Cle MAC de session: ";
+	cout << session_mac_key << endl;
+
+	//Réception des information de connection reseau...
+	cout << "\nEn attente des informations reseau..." << endl;
+	client.recvMessage(message);
+	if (!verifyMAC(message, mac_key)) {
+		cout << "\nsender is not Clement";
+		return;
+	}
+	message = decrypt(extractMsg(message), agnesse_key);
+	bob_IP = informationReseauIPAddress(message);
+	bob_port = informationReseauPort(message);
+	if (bob_IP.size() > 0 && bob_port.size() > 0)
+	{
+		cout << "\nInformations reseau recu..." << endl;
+		cout << "Adresse IP: ";
+		cout << bob_IP << endl;
+		cout << "Port: ";
+		cout << bob_port << endl;
+	}
+	
+	//Connection au serveur Bob...
+	cout << "\nTentative de connection a Bob..." << endl;
+	try
+	{
+		bool connected = false;
+		SimpleSocket client = SimpleSocket();
+
+		while (!connected) {
+			try
+			{
+				cout << "\nconnecting to " + bob_IP + " on port " << bob_port;
+				client.connectSocket(bob_IP.c_str(), stoi(bob_port));
+				connected = true;
+				runConversationAgnesseBob(client, session_key, session_mac_key);
+			}
+			catch (const ConnectionException& e)
+			{
+				cout << endl << e.what();
+				this_thread::sleep_for(5s);
+			}
+		}
+	}
+	catch (const ConnectionException& e)
+	{
+		cout << endl << e.what();
+	}
 }
+
+void runConversationAgnesseBob(SimpleSocket clientBob, std::string session_key, std::string session_mac_key)
+{
+	string message = "";
+
+
+	//S'identifie aupres de Bob avec session_key et session_mac_key
+	message = session_key;
+	clientBob.sendMessage(message + generateMac(message, session_mac_key));
+	clientBob.recvMessage(message);
+	if (!authenticate(message, "is Bob", session_mac_key))
+	{
+		cout << "\nsender is not Bob";
+		return;
+	}
+	else
+	{
+		cout << "\n\nAuthentication process success." << endl;
+	}
+
+	cout << "La connection avec Bob est maintenant etablie.\n" << endl;
+
+	//Échange de messages tant que un des interloccuteurs ne mentionne pas la fin de la connection
+	while (message != "end")
+	{
+		cout << "Pour terminer la conversation, tapez: 'end'." << endl;
+
+		//Agnesse écrit son message
+		cout << "Quel est le message a transmettre?" << endl;
+		getline(cin, message);
+		message = encrypt(message, session_key);
+		clientBob.sendMessage(message + generateMac(message, session_mac_key));
+
+		//Agnesse attend un reponse...
+		cout << "\nEn attente de la reception du message..." << endl;
+		clientBob.recvMessage(message);
+		if (!verifyMAC(message, session_mac_key)) {
+			cout << "\nsender is not Clement";
+			return;
+		}
+		message = decrypt(extractMsg(message), session_key);
+		cout << "Message recu:" << endl;
+		cout << message << endl << endl;
+	}
+
+	//Terminaison de la conversation
+	clientBob.close();
+};

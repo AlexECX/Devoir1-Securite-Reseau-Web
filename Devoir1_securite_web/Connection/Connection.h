@@ -46,6 +46,5 @@ public:
 	//est pret a recevoir en plusieurs paquets.
 	bool recvMessage(std::string &message);
 
-
 };
 

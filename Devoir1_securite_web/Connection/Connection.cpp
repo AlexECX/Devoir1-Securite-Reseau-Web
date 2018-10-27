@@ -290,3 +290,4 @@ bool Connection::recvMessage(string &message) {
 
 	return true;
 }
+

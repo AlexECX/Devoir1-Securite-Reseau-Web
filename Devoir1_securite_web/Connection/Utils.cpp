@@ -19,3 +19,36 @@ void initWSA(){
 		return;
 	}
 }
+
+string informationReseauIPAddress(std::string message)
+{
+	int i = 0;
+	string IP = "";
+
+	while (message[i] != ':')
+	{
+		IP += message[i];
+		i++;
+	}
+
+	return IP;
+}
+
+string informationReseauPort(std::string message)
+{
+	int i = 0;
+	string port = "";
+
+	while (message[i] != ':')
+	{
+		i++;
+	}
+	i++;
+	while (i < message.size())
+	{
+		port += message[i];
+		i++;
+	}
+
+	return port;
+}

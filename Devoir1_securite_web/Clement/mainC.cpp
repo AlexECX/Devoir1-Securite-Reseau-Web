@@ -100,58 +100,50 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 	string session_key = generateKey(8);
 	string mac_key = generateKey(32);
 
-	//Distribution d'une session et MAC key a Agnesse et Bob
-	message = encrypt(session_key, agnesse_key);
+	//Clément envoie une question à Agnesse
+	message = "Clement demande:\nA qui desires-tu parler Agnesse?";
+	message = encrypt(message, agnesse_key);
 	clientA.sendMessage(message + generateMac(message, mac_key_A));
-	message = encrypt(mac_key, session_key);
-	clientA.sendMessage(message + generateMac(message, mac_key_A));
 
-	message = encrypt(session_key, bob_key);
-	clientB.sendMessage(message + generateMac(message, mac_key_B));
-	message = encrypt(mac_key, session_key);
-	clientB.sendMessage(message + generateMac(message, mac_key_B));
-
-	bob_key = agnesse_key = session_key;
-	mac_key_B = mac_key_A = mac_key;
-
-	//R�ception de Agnesse
+	//Clément reçoit la réponse d'Agnesse
 	clientA.recvMessage(message);
-	cout << endl << endl;
-	cout << "Crypted message received from Agnesse for Bob: \n" << endl;
-	cout << "\"" << message << "\"" << endl << endl;
-
-	if (verifyMAC(message, mac_key_A)) {
-		cout << "\nthe verifyMAC result is: True";
-		//Envoie � Bob
-		clientB.sendMessage(message);
+	if (!verifyMAC(message, mac_key_A)) {
+		cout << "\nsender is not Clement";
+		return;
 	}
-	else {
-		cout << endl << "Agnesse MAC incorrect";
-		//Envoie erreurs
-		message = encrypt("MAC error from Clement", agnesse_key);
+	message = decrypt(extractMsg(message), agnesse_key);
+	cout << "\n\nAgnesse desire parler avec: " << endl;
+	cout << message << endl;
+
+	//Distribution d'une clé de session, MAC key de session et informations reseau a Agnesse et Bob si validation ok
+	if (message == "Bob" || message == "bob" || message == "BOB" || message == "BOb" || message == "BoB" || message == "bOb")
+	{
+		cout << "\nValidation complete. Envoie des messages a Bob et Agnesse...\n" << endl;
+		message = "Clement vous confirme que " + message + " est de confiance.\nLa conversation pourra debuter.\nVoici les informations pertinentes pour la communication.";
+		message = encrypt(message, agnesse_key);
 		clientA.sendMessage(message + generateMac(message, mac_key_A));
-		message = encrypt("Agnesse MAC incorrect", bob_key);
+		message = "Agnesse desire communiquer avec vous. Agnesse est de confiance.\nVoici les information de connection...";
+		message = encrypt(message, bob_key);
+		clientB.sendMessage(message + generateMac(message, mac_key_B));
+
+		message = encrypt(session_key, agnesse_key);
+		clientA.sendMessage(message + generateMac(message, mac_key_A));
+		message = encrypt(mac_key, agnesse_key);
+		clientA.sendMessage(message + generateMac(message, mac_key_A));
+		message = encrypt("127.0.0.1:2031", agnesse_key);
+		clientA.sendMessage(message + generateMac(message, mac_key_A));
+
+		message = encrypt(session_key, bob_key);
+		clientB.sendMessage(message + generateMac(message, mac_key_B));
+		message = encrypt(mac_key, bob_key);
+		clientB.sendMessage(message + generateMac(message, mac_key_B));
+		message = encrypt("127.0.0.1:2031", bob_key);
 		clientB.sendMessage(message + generateMac(message, mac_key_B));
 	}
-
-
-	//R�ception de Bob
-	clientB.recvMessage(message);
-	cout << "Crypted message received from Bob for Agnesse: \n" << endl;
-	cout << "\"" << message << "\"" << endl << endl;
-
-	if (verifyMAC(message, mac_key_B)) {
-		cout << "\nthe verifyMAC result is: True";
-		//Envoie � Agnesse
-		clientA.sendMessage(message);
-	}
-	else {
-		cout << endl << "Agnesse MAC incorrect";
-		//Envoie erreurs
-		message = encrypt("MAC error from Clement", bob_key);
-		clientB.sendMessage(message + generateMac(message, mac_key_B));
-		message = encrypt("Bob MAC incorrect", agnesse_key);
-		clientA.sendMessage(message + generateMac(message, mac_key_A));
+	else
+	{
+		cout << "\nDestinataire inconnu, veillez spécifier un destinataire connu..." << endl;
 	}
 
+	cout << "Traitement de la demande complete...Fermeture du service.\n" << endl;	
 }
