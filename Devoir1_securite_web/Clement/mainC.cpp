@@ -108,7 +108,7 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 	//Clément reçoit la réponse d'Agnesse
 	clientA.recvMessage(message);
 	if (!verifyMAC(message, mac_key_A)) {
-		cout << "\nsender is not Clement";
+		cout << "\nsender is not Agnesse";
 		return;
 	}
 	message = decrypt(extractMsg(message), agnesse_key);
@@ -116,7 +116,7 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 	cout << message << endl;
 
 	//Distribution d'une clé de session, MAC key de session et informations reseau a Agnesse et Bob si validation ok
-	if (message == "Bob" || message == "bob" || message == "BOB" || message == "BOb" || message == "BoB" || message == "bOb")
+	if (tolower_str(message).compare("bob") == 0)
 	{
 		cout << "\nValidation complete. Envoie des messages a Bob et Agnesse...\n" << endl;
 		message = "Clement vous confirme que " + message + " est de confiance.\nLa conversation pourra debuter.\nVoici les informations pertinentes pour la communication.";

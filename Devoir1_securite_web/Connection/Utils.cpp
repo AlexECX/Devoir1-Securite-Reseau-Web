@@ -1,6 +1,7 @@
 #pragma once
 #include <winsock.h>
 #include <iostream>
+#include <stdio.h>
 #include "Utils.h"
 
 using namespace std;
@@ -36,7 +37,7 @@ string informationReseauIPAddress(std::string message)
 
 string informationReseauPort(std::string message)
 {
-	int i = 0;
+	unsigned i = 0;
 	string port = "";
 
 	while (message[i] != ':')
@@ -51,4 +52,13 @@ string informationReseauPort(std::string message)
 	}
 
 	return port;
+}
+
+std::string& tolower_str(std::string &str)
+{
+	for (auto &ch : str)
+	{
+		ch = tolower(ch);
+	}
+	return str;
 }

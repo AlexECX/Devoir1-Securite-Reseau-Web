@@ -161,24 +161,9 @@ void scriptedConvoTest(SimpleSocket client) {
 	try
 	{
 		SimpleServerSocket server = SimpleServerSocket((short)stoi(agnesse_port));
-		SimpleSocket clientAgnesse;
+		SimpleSocket clientAgnesse = server.acceptSocket();
 
-		SimpleSocket client = server.acceptSocket();
-		client.recvMessage(message);
-		if (authenticate(message, session_key, session_mac_key)) 
-		{
-			cout << "\n\nAuthentification process success." << endl;
-			clientAgnesse = client;
-			message = "is Bob";
-			clientAgnesse.sendMessage(message + generateMac(message, session_mac_key));
-			runConversationAgnesseBob(clientAgnesse, session_key, session_mac_key);
-		}
-		else {
-			cout << "\nCriteria not met for connection (session key do not match...";
-			client.close();
-			return;
-		}
-
+		runConversationAgnesseBob(clientAgnesse, session_key, session_mac_key);
 	}
 	catch (const ConnectionException& e)
 	{
@@ -199,7 +184,7 @@ void runConversationAgnesseBob(SimpleSocket clientAgnesse, std::string session_k
 		cout << "En attente de la reception du message..." << endl;
 		clientAgnesse.recvMessage(message);
 		if (!verifyMAC(message, session_mac_key)) {
-			cout << "\nsender is not Clement";
+			cout << "\nsender is not Agnesse";
 			return;
 		}
 		message = decrypt(extractMsg(message), session_key);

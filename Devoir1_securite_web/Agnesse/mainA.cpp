@@ -184,13 +184,15 @@ void scriptedConvoTest(SimpleSocket client) {
 				cout << "\nconnecting to " + bob_IP + " on port " << bob_port;
 				client.connectSocket(bob_IP.c_str(), stoi(bob_port));
 				connected = true;
-				runConversationAgnesseBob(client, session_key, session_mac_key);
 			}
 			catch (const ConnectionException& e)
 			{
 				cout << endl << e.what();
 				this_thread::sleep_for(5s);
 			}
+
+			runConversationAgnesseBob(client, session_key, session_mac_key);
+
 		}
 	}
 	catch (const ConnectionException& e)
@@ -202,32 +204,19 @@ void scriptedConvoTest(SimpleSocket client) {
 void runConversationAgnesseBob(SimpleSocket clientBob, std::string session_key, std::string session_mac_key)
 {
 	string message = "";
-
-
-	//S'identifie aupres de Bob avec session_key et session_mac_key
-	message = session_key;
-	clientBob.sendMessage(message + generateMac(message, session_mac_key));
-	clientBob.recvMessage(message);
-	if (!authenticate(message, "is Bob", session_mac_key))
-	{
-		cout << "\nsender is not Bob";
-		return;
-	}
-	else
-	{
-		cout << "\n\nAuthentication process success." << endl;
-	}
+	string message1 = "";
 
 	cout << "La connection avec Bob est maintenant etablie.\n" << endl;
 
 	//Échange de messages tant que un des interloccuteurs ne mentionne pas la fin de la connection
-	while (message != "end")
+	while (message1 != "end")
 	{
 		cout << "Pour terminer la conversation, tapez: 'end'." << endl;
 
 		//Agnesse écrit son message
 		cout << "Quel est le message a transmettre?" << endl;
 		getline(cin, message);
+		message1 = message;
 		message = encrypt(message, session_key);
 		clientBob.sendMessage(message + generateMac(message, session_mac_key));
 
@@ -235,7 +224,7 @@ void runConversationAgnesseBob(SimpleSocket clientBob, std::string session_key, 
 		cout << "\nEn attente de la reception du message..." << endl;
 		clientBob.recvMessage(message);
 		if (!verifyMAC(message, session_mac_key)) {
-			cout << "\nsender is not Clement";
+			cout << "\nsender is not Bob";
 			return;
 		}
 		message = decrypt(extractMsg(message), session_key);
