@@ -66,7 +66,7 @@ void runServer(short nPort)
 				message = "is Clement";
 				clientA.sendMessage(message + generateMac(message, mac_key_A));
 			}
-			else if (authenticate(message, "is Bob", mac_key_B)) {
+			else if (authenticate(message, "is Bernard", mac_key_B)) {
 				clientB = client;
 				message = "is Clement";
 				clientB.sendMessage(message + generateMac(message, mac_key_B));
@@ -84,15 +84,13 @@ void runServer(short nPort)
 	catch (const ConnectionException& e)
 	{
 		cout << endl << e.what();
-	}
-	
-	
+	}	
 }
 
 void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 	string message = "";
 
-	string bob_key = "bobinoonibob";
+	string bernard_key = "bobinoonibob";
 	string mac_key_B = "mac_key_B";
 	string agnesse_key = "gadgettegdag";
 	string mac_key_A = "mac_key_A";
@@ -115,17 +113,19 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 	cout << "\n\nAgnesse desire parler avec: " << endl;
 	cout << message << endl;
 
-	//Distribution d'une clé de session, MAC key de session et informations reseau a Agnesse et Bob si validation ok
-	if (tolower_str(message).compare("bob") == 0)
+	//Distribution d'une clé de session, MAC key de session et informations reseau a Agnesse et Bernard si validation ok
+	if (tolower_str(message).compare("bernard") == 0)
 	{
-		cout << "\nValidation complete. Envoie des messages a Bob et Agnesse...\n" << endl;
+		//Envoie des messages d'information
+		cout << "\nValidation complete. Envoie des messages a Bernard et Agnesse...\n" << endl;
 		message = "Clement vous confirme que " + message + " est de confiance.\nLa conversation pourra debuter.\nVoici les informations pertinentes pour la communication.";
 		message = encrypt(message, agnesse_key);
 		clientA.sendMessage(message + generateMac(message, mac_key_A));
 		message = "Agnesse desire communiquer avec vous. Agnesse est de confiance.\nVoici les information de connection...";
-		message = encrypt(message, bob_key);
+		message = encrypt(message, bernard_key);
 		clientB.sendMessage(message + generateMac(message, mac_key_B));
 
+		//Envoie des clés de session Agnesse
 		message = encrypt(session_key, agnesse_key);
 		clientA.sendMessage(message + generateMac(message, mac_key_A));
 		message = encrypt(mac_key, agnesse_key);
@@ -133,11 +133,12 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 		message = encrypt("127.0.0.1:2031", agnesse_key);
 		clientA.sendMessage(message + generateMac(message, mac_key_A));
 
-		message = encrypt(session_key, bob_key);
+		//Envoie des clés de session Bernard
+		message = encrypt(session_key, bernard_key);
 		clientB.sendMessage(message + generateMac(message, mac_key_B));
-		message = encrypt(mac_key, bob_key);
+		message = encrypt(mac_key, bernard_key);
 		clientB.sendMessage(message + generateMac(message, mac_key_B));
-		message = encrypt("127.0.0.1:2031", bob_key);
+		message = encrypt("127.0.0.1:2031", bernard_key);
 		clientB.sendMessage(message + generateMac(message, mac_key_B));
 	}
 	else
@@ -145,5 +146,6 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 		cout << "\nDestinataire inconnu, veillez spécifier un destinataire connu..." << endl;
 	}
 
+	//Fermeture du tiers de confiance...
 	cout << "Traitement de la demande complete...Fermeture du service.\n" << endl;	
 }

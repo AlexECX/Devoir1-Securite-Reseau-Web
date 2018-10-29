@@ -16,7 +16,7 @@ using namespace std;
 
 void runClient(short nPort, const char* host);
 void scriptedConvoTest(SimpleSocket client);
-void runConversationAgnesseBob(SimpleSocket clientAgnesse, std::string, std::string);
+void runConversationAgnesseBernard(SimpleSocket clientAgnesse, std::string, std::string);
 
 int main(int argc, char **argv)
 {
@@ -81,12 +81,10 @@ void runClient(short nPort, const char * host)
 	{
 		cout << endl << e.what();
 	}
-	
-
 }
 
 void scriptedConvoTest(SimpleSocket client) {
-	string bob_key = "bobinoonibob";
+	string bernard_key = "bobinoonibob";
 	string session_key = "";
 	string mac_key = "mac_key_B";
 	string session_mac_key = "";
@@ -96,7 +94,7 @@ void scriptedConvoTest(SimpleSocket client) {
 	string agnesse_port = "";
 
 	//S'identifie aupres de Clement
-	message = "is Bob";
+	message = "is Bernard";
 	client.sendMessage(message + generateMac(message, mac_key));
 	client.recvMessage(message);
 	if (!authenticate(message, "is Clement", mac_key))
@@ -111,10 +109,11 @@ void scriptedConvoTest(SimpleSocket client) {
 		cout << "\nsender is not Clement";
 		return;
 	}
-	message = decrypt(extractMsg(message), bob_key);
+	message = decrypt(extractMsg(message), bernard_key);
+	cout << "Message pour Bernard:" << endl;
 	cout << message << endl;
 
-	//Réception de la clé de session et MAC de session et infos réseau de Bob
+	//Réception de la clé de session et MAC de session et infos réseau de Bernard
 	cout << "\nEn attente d'une cle de session..." << endl;
 	
 	client.recvMessage(message);
@@ -122,7 +121,8 @@ void scriptedConvoTest(SimpleSocket client) {
 		cout << "\nsender is not Clement";
 		return;
 	}
-	session_key = decrypt(extractMsg(message), bob_key);
+	session_key = decrypt(extractMsg(message), bernard_key);
+	cout << "Message pour Bernard:" << endl;
 	cout << "\nCle de session recu..." << endl;
 	cout << "Cle de session: ";
 	cout << session_key << endl;
@@ -132,19 +132,21 @@ void scriptedConvoTest(SimpleSocket client) {
 		cout << "\nsender is not Clement";
 		return;
 	}
-	session_mac_key = decrypt(extractMsg(message), bob_key);
+	session_mac_key = decrypt(extractMsg(message), bernard_key);
+	cout << "Message pour Bernard:" << endl;
 	cout << "\nCle de session MAC recu..." << endl;
 	cout << "Cle MAC de session: ";
 	cout << session_mac_key << endl;
 
 	//Réception des informations réseau
+	cout << "Message pour Bernard:" << endl;
 	cout << "\nEn attente des informations reseau..." << endl;
 	client.recvMessage(message);
 	if (!verifyMAC(message, mac_key)) {
 		cout << "\nsender is not Clement";
 		return;
 	}
-	message = decrypt(extractMsg(message), bob_key);
+	message = decrypt(extractMsg(message), bernard_key);
 	agnesse_IP = informationReseauIPAddress(message);
 	agnesse_port = informationReseauPort(message);
 	if (agnesse_IP.size() > 0 && agnesse_port.size() > 0)
@@ -156,14 +158,14 @@ void scriptedConvoTest(SimpleSocket client) {
 		cout << agnesse_port << endl;
 	}
 
-	//Démarrage serveur de Bob pour la communication Bob et Agnesse
+	//Démarrage serveur de Bernard pour la communication entre Bernard et Agnesse
 	cout << "\nEn attente de la connection..." << endl;
 	try
 	{
 		SimpleServerSocket server = SimpleServerSocket((short)stoi(agnesse_port));
 		SimpleSocket clientAgnesse = server.acceptSocket();
 
-		runConversationAgnesseBob(clientAgnesse, session_key, session_mac_key);
+		runConversationAgnesseBernard(clientAgnesse, session_key, session_mac_key);
 	}
 	catch (const ConnectionException& e)
 	{
@@ -171,17 +173,18 @@ void scriptedConvoTest(SimpleSocket client) {
 	}	
 }
 
-void runConversationAgnesseBob(SimpleSocket clientAgnesse, std::string session_key, std::string session_mac_key)
+void runConversationAgnesseBernard(SimpleSocket clientAgnesse, std::string session_key, std::string session_mac_key)
 {
 	string message = "";
 	string message1 = "";
 
-	cout << "La connection avec Agnsse est maintenant etablie.\n" << endl;
+	cout << "\n\n--------------------------------------------------------" << endl;
+	cout << "\nLa connection avec Agnesse est maintenant etablie.\n" << endl;
 
 	while (message1 != "end")
 	{
-		//Bob attend un reponse...
-		cout << "En attente de la reception du message..." << endl;
+		//Bernard attend un reponse...
+		cout << "\nEn attente de la reception du message..." << endl;
 		clientAgnesse.recvMessage(message);
 		if (!verifyMAC(message, session_mac_key)) {
 			cout << "\nsender is not Agnesse";
@@ -191,9 +194,9 @@ void runConversationAgnesseBob(SimpleSocket clientAgnesse, std::string session_k
 		cout << "\nMessage recu:\n";
 		cout << message << endl;
 
-		//Bob écrit son message
+		//Bernard écrit son message
 		cout << "\nPour terminer la conversation, tapez: 'end'." << endl;
-		cout << "\nQuel est le message a transmettre?" << endl;
+		cout << "Quel est le message a transmettre?" << endl;
 		getline(cin, message);
 		//Simplement pour la condition du while
 		message1 = message;
