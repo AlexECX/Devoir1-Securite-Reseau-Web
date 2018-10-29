@@ -176,20 +176,21 @@ void scriptedConvoTest(SimpleSocket client) {
 void runConversationAgnesseBernard(SimpleSocket clientAgnesse, std::string session_key, std::string session_mac_key)
 {
 	string message = "";
-	string message1 = "";
 
 	cout << "\n\n--------------------------------------------------------" << endl;
 	cout << "\nLa connection avec Agnesse est maintenant etablie.\n" << endl;
 
-	while (message1 != "end")
+	while (true)
 	{
 		//Bernard attend un reponse...
 		cout << "\nEn attente de la reception du message..." << endl;
 		clientAgnesse.recvMessage(message);
+
 		if (!verifyMAC(message, session_mac_key)) {
 			cout << "\nsender is not Agnesse";
 			return;
 		}
+
 		message = decrypt(extractMsg(message), session_key);
 		cout << "\nMessage recu:\n";
 		cout << message << endl;
@@ -198,10 +199,20 @@ void runConversationAgnesseBernard(SimpleSocket clientAgnesse, std::string sessi
 		cout << "\nPour terminer la conversation, tapez: 'end'." << endl;
 		cout << "Quel est le message a transmettre?" << endl;
 		getline(cin, message);
-		//Simplement pour la condition du while
-		message1 = message;
-		message = encrypt(message, session_key);
-		clientAgnesse.sendMessage(message + generateMac(message, session_mac_key));
+
+		if (message == "end") {
+			//Simplement pour la condition du while
+			message = encrypt(message, session_key);
+			clientAgnesse.sendMessage(message + generateMac(message, session_mac_key));
+			break;
+		}
+		else
+		{
+			message = encrypt(message, session_key);
+			clientAgnesse.sendMessage(message + generateMac(message, session_mac_key));
+		}
+
+		
 	}
 
 	//Terminaison de la conversation

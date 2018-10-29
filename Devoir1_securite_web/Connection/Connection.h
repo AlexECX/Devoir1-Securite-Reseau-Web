@@ -2,6 +2,7 @@
 #include <winsock.h>
 #include <string>
 #include "ConnectionException.h"
+#include <memory>  
 
 class SocketWrap;
 

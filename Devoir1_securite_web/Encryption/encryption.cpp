@@ -40,10 +40,13 @@ string generateKey(unsigned size)
 
 
 string encrypt(const string& message, const string& key) {
+	
 	return cbcEncrypt(message, key);
+
 }
 
 string decrypt(const string& message, const string& key) {
+
 	return cbcDecrypt(message, key);
 }
 
@@ -330,6 +333,7 @@ bool authenticate(string msg, string name, string mac_key)
 }
 
 string generateMac(const string& message, const string& key) {
+
 	return simpleHMCA(message, key);
 }
 
