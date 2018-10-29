@@ -135,7 +135,6 @@
     <ClInclude Include="..\Connection\ConnectionException.h" />
     <ClInclude Include="..\Connection\SimpleServerSocket.h" />
     <ClInclude Include="..\Connection\SimpleSocket.h" />
-    <ClInclude Include="..\Connection\SocketWrap.h" />
     <ClInclude Include="..\Connection\Utils.h" />
     <ClInclude Include="..\Encryption\base64.h" />
     <ClInclude Include="..\Encryption\encryption.h" />

@@ -1,10 +1,10 @@
 #pragma once
 #include <winsock.h>
 #include <string>
-#include "SocketWrap.h"
 #include "ConnectionException.h"
+#include <memory>  
 
-#define WSA_ERROR "Winsock error "+std::to_string(WSAGetLastError())
+class SocketWrap;
 
 
 class Connection
@@ -15,7 +15,7 @@ protected:
 	
 	std::shared_ptr<SocketWrap> mySocket_ptr = nullptr;
 	SOCKET		mySocket;
-	SOCKADDR_IN saServer;
+	SOCKADDR_IN addrInfo;
 	
 
 public:
@@ -25,11 +25,7 @@ public:
 
 	virtual ~Connection();
 
-	Connection& operator=(const Connection& other) {
-		mySocket_ptr = other.mySocket_ptr;
-		mySocket = mySocket_ptr->getTheSocket();
-		return *this;
-	}
+	Connection& operator=(const Connection& other);
 
 	void close();
 

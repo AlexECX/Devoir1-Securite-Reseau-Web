@@ -29,26 +29,26 @@ SimpleServerSocket::~SimpleServerSocket()
 
 void SimpleServerSocket::bindSocket(const char * szServer, short cPort)
 {
-	saServer.sin_family = AF_INET;
+	addrInfo.sin_family = AF_INET;
 	if (szServer != nullptr) {
-		saServer.sin_addr.s_addr = inet_addr(szServer);
+		addrInfo.sin_addr.s_addr = inet_addr(szServer);
 	}
 	else
 	{
-		saServer.sin_addr.s_addr = INADDR_ANY;   // Indicates that connections can come from any local interface (IP address)
+		addrInfo.sin_addr.s_addr = INADDR_ANY;   // Indicates that connections can come from any local interface (IP address)
 											 // (by the way,  INADDR_ANY is actually "0x00000000")
 											 // ************ if you wish to specify a specific local interface (IP address) :
-											 //              =>     saServer.sin_addr.s_addr = inet_addr( "127.0.0.1" );
+											 //              =>     addrInfo.sin_addr.s_addr = inet_addr( "127.0.0.1" );
 	}
 	
-	saServer.sin_port = htons(cPort);        // Use port from command line
+	addrInfo.sin_port = htons(cPort);        // Use port from command line
 
 											 //
 											 // bind the name to the socket
 											 //
 	int nRet;
 	nRet = bind(mySocket,                      // Socket
-		(LPSOCKADDR)&saServer,       // Our address
+		(LPSOCKADDR)&addrInfo,       // Our address
 		sizeof(struct sockaddr));    // Size of address structure
 	if (nRet == SOCKET_ERROR) {
 		throw ConnectionException(WSA_ERROR, TRACEBACK);
