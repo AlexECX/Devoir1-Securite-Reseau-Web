@@ -2,6 +2,7 @@
 #include <stdexcept>
 #include <string>
 
+#define WSA_ERROR "Winsock error "+std::to_string(WSAGetLastError())
 #define TRACEBACK __FILE__, __LINE__, __FUNCTION__
 
 class ConnectionException : public std::runtime_error

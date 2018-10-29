@@ -62,8 +62,5 @@
     <ClInclude Include="..\Encryption\encryption.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\Connection\SocketWrap.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
 </Project>

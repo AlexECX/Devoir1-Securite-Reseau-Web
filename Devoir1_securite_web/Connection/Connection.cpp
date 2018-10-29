@@ -7,6 +7,24 @@
 
 using namespace std;
 
+//Wrapper to help manage SOCKET lifetime
+class SocketWrap
+{
+private:
+	SOCKET theSocket;
+public:
+	SocketWrap(SOCKET socket) {
+		theSocket = socket;
+	}
+	~SocketWrap() {
+		closesocket(theSocket);
+	}
+
+	SOCKET& getTheSocket() {
+		return theSocket;
+	}
+};
+
 Connection::Connection(const SOCKET& socket)
 {
 	mySocket_ptr = make_shared<SocketWrap>(socket);
@@ -30,6 +48,12 @@ Connection::Connection()
 
 Connection::~Connection()
 {
+}
+
+Connection & Connection::operator=(const Connection & other) {
+	mySocket_ptr = other.mySocket_ptr;
+	mySocket = mySocket_ptr->getTheSocket();
+	return *this;
 }
 
 
