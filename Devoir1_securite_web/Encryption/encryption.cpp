@@ -65,6 +65,11 @@ string cbcEncrypt(const string& message, const string& key)
 	unsigned block_count = message.length() / CHAIN_BLOCK;
 	unsigned residue = message.length() % CHAIN_BLOCK;
 
+	cout << "\n****************************************************** \n" << endl;
+	cout << "FONCTION 'cbcEncrypt': \n\n" << endl;
+	cout << "Encryption du message:\n" << message << "\n" << endl;
+	cout << "Avec la cle:\n" << key << "\n" << endl;
+
 	for (unsigned i = 0; i <= block_count; i++) {
 
 		if (i == block_count) { //si est le dernier bloc
@@ -107,6 +112,8 @@ string cbcEncrypt(const string& message, const string& key)
 		memcpy(blockXOR, blockInput, CHAIN_BLOCK);
 	}
 	
+	cout << "Cryptogramme:\n" << cryptogram << "\n" << endl;
+	cout << "****************************************************** \n" << endl;
 	return cryptogram;
 }
 
@@ -121,6 +128,11 @@ string cbcDecrypt(const string& message, const string& key)
 
 	//Initialisation Vector
 	memset(blockXOR, 0x02, CHAIN_BLOCK);
+
+	cout << "\n****************************************************** \n" << endl;
+	cout << "FONCTION 'cbcDecrypt': \n\n" << endl;
+	cout << "Desencryption du message:\n" << message << "\n" << endl;
+	cout << "Avec la cle:\n" << key << "\n" << endl;
 
 	unsigned block_count = message.length() / CHAIN_BLOCK;
 	for (unsigned i = 0; i < block_count; i++) {
@@ -150,7 +162,11 @@ string cbcDecrypt(const string& message, const string& key)
 	}
 	//Le cryptogram contient les octets de "padding" utilise lors de l'encryption. Cette
 	//operation retranche ces octets.
-	return cryptogram.substr(0, cryptogram.length() - int(cryptogram.back()));
+	cryptogram = cryptogram.substr(0, cryptogram.length() - int(cryptogram.back()));
+
+	cout << "Message desencrypte:\n" << cryptogram << "\n" << endl;
+	cout << "****************************************************** \n" << endl;
+	return cryptogram;
 }
 
 void reseauFeistel(unsigned char* blockInput, const string& key, unsigned turn_count)
@@ -370,6 +386,12 @@ string simpleHash(const string& message) {
 
 //Implementation d'un HMAC
 string simpleHMCA(const string& message, const string& key) {
+
+	cout << "\n******************************** \n" << endl;
+	cout << "FONCTION HMAC: \n\n" << endl;
+	cout << "Entree:\n" << message << "\n" << endl;
+	cout << "Avec la cle:\n" << key << "\n" << endl;
+
 	unsigned char key_plus[BLOCK_SIZE];
 	memset(key_plus, 0, BLOCK_SIZE);
 	if (key.length() < BLOCK_SIZE) {
@@ -394,6 +416,9 @@ string simpleHMCA(const string& message, const string& key) {
 	}
 
 	str_out = simpleHash(Si + str_out);
+
+	cout << "String de sortie:\n" << str_out << "\n" << endl;
+	cout << "******************************** \n" << endl;
 
 	return str_out;
 }
