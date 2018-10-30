@@ -41,11 +41,18 @@ string generateKey(unsigned size)
 
 string encrypt(const string& message, const string& key) {
 	
-	return cbcEncrypt(message, key);
+	cout << "\nCHIFFREMENT DU MESSAGE\n" << endl;
+	cout << "Message: " << message << endl;
+	cout << "Cle: " << key << endl;
 
+	return cbcEncrypt(message, key);
 }
 
 string decrypt(const string& message, const string& key) {
+
+	cout << "\nDECHIFFREMENT DU MESSAGE\n" << endl;
+	cout << "Cryptogramme: " << message << endl;
+	cout << "Cle: " << key << endl;
 
 	return cbcDecrypt(message, key);
 }
@@ -67,11 +74,6 @@ string cbcEncrypt(const string& message, const string& key)
 
 	unsigned block_count = message.length() / CHAIN_BLOCK;
 	unsigned residue = message.length() % CHAIN_BLOCK;
-
-	cout << "\n****************************************************** \n" << endl;
-	cout << "FONCTION 'cbcEncrypt': \n\n" << endl;
-	cout << "Encryption du message:\n" << message << "\n" << endl;
-	cout << "Avec la cle:\n" << key << "\n" << endl;
 
 	for (unsigned i = 0; i <= block_count; i++) {
 
@@ -115,8 +117,8 @@ string cbcEncrypt(const string& message, const string& key)
 		memcpy(blockXOR, blockInput, CHAIN_BLOCK);
 	}
 	
-	cout << "Cryptogramme:\n" << cryptogram << "\n" << endl;
-	cout << "****************************************************** \n" << endl;
+	cout << "Cryptogramme: " << cryptogram << endl;
+	cout << "------------------------------------" << endl;
 	return cryptogram;
 }
 
@@ -131,11 +133,6 @@ string cbcDecrypt(const string& message, const string& key)
 
 	//Initialisation Vector
 	memset(blockXOR, 0x02, CHAIN_BLOCK);
-
-	cout << "\n****************************************************** \n" << endl;
-	cout << "FONCTION 'cbcDecrypt': \n\n" << endl;
-	cout << "Desencryption du message:\n" << message << "\n" << endl;
-	cout << "Avec la cle:\n" << key << "\n" << endl;
 
 	unsigned block_count = message.length() / CHAIN_BLOCK;
 	for (unsigned i = 0; i < block_count; i++) {
@@ -167,8 +164,8 @@ string cbcDecrypt(const string& message, const string& key)
 	//operation retranche ces octets.
 	cryptogram = cryptogram.substr(0, cryptogram.length() - int(cryptogram.back()));
 
-	cout << "Message desencrypte:\n" << cryptogram << "\n" << endl;
-	cout << "****************************************************** \n" << endl;
+
+	cout << "------------------------------------" << endl;
 	return cryptogram;
 }
 
@@ -322,28 +319,49 @@ string simpleHMCA(const string& message, const string& key);
 //de l'assignation de SimpleSockets.
 bool authenticate(string msg, string name, string mac_key)
 {
+	cout << "\nAUTHENTIFICATION DU MESSAGE \n" << endl;
+	cout << "Nom: " << name << endl;
+
 	if (extractMsg(msg).compare(name) == 0
 		&& verifyMAC(msg, mac_key))
 	{
+		cout << "------------------------------------" << endl;
 		return true;
 	}
 	else {
+		cout << "Erreur de verification du code MAC." << endl;
+		cout << name << " n'a pas pu etre authentifie. " << endl;
+		cout << extractMsg(msg) << " ne correspond pas au critere " << name << "." << endl;
+		cout << "------------------------------------" << endl;
 		return false;
 	}
 }
 
 string generateMac(const string& message, const string& key) {
 
+	cout << "\nGENERATION DU CODE MAC: \n" << endl;
+	cout << "Message: " << message << endl;
+	cout << "Cle MAC: " << key << endl;
+	cout << "------------------------------------" << endl;
 	return simpleHMCA(message, key);
 }
 
 bool verifyMAC(const string& str, const string& key) {
 	try
 	{
+		cout << "\nVERIFICATION DU CODE MAC: \n" << endl;
+		cout << "Message: " << str << endl;
+		cout << "Cle MAC: " << key << endl;
+		cout << "Resultat de la verification MAC: ";
 		string the_msg = str.substr(0, str.length() - BLOCK_SIZE);
 		string the_MAC = str.substr(str.length() - BLOCK_SIZE, BLOCK_SIZE);
 
-		return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
+		if (the_MAC.compare(simpleHMCA(the_msg, key)) == 0)
+		{
+			cout << "succes." << endl;
+			return true;
+		}
+		//return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
 	}
 	catch (const std::out_of_range& e)
 	{
@@ -391,11 +409,6 @@ string simpleHash(const string& message) {
 //Implementation d'un HMAC
 string simpleHMCA(const string& message, const string& key) {
 
-	cout << "\n******************************** \n" << endl;
-	cout << "FONCTION HMAC: \n\n" << endl;
-	cout << "Entree:\n" << message << "\n" << endl;
-	cout << "Avec la cle:\n" << key << "\n" << endl;
-
 	unsigned char key_plus[BLOCK_SIZE];
 	memset(key_plus, 0, BLOCK_SIZE);
 	if (key.length() < BLOCK_SIZE) {
@@ -420,10 +433,6 @@ string simpleHMCA(const string& message, const string& key) {
 	}
 
 	str_out = simpleHash(Si + str_out);
-
-	cout << "String de sortie:\n" << str_out << "\n" << endl;
-	cout << "******************************** \n" << endl;
-
 	return str_out;
 }
 

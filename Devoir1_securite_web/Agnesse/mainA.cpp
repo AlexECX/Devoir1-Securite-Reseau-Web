@@ -95,9 +95,15 @@ void scriptedConvoTest(SimpleSocket client) {
 	string bernard_port = "";
 
 	//S'identifie aupres de Clement
+	cout << "\nAuthentification d'Agnesse aupres de Clement..." << endl;
+	cout << "Envoie d'un message..." << endl;
 	message = "is Agnesse";
 	client.sendMessage(message + generateMac(message, mac_key));
+	cout << "\n\n\nMessage envoye a Clement." << endl;
+	cout << "Identification de Clement...." << endl;
 	client.recvMessage(message);
+	cout << "Reponse recu." << endl;
+	cout << "Authentification...\n\n" << endl;
 	if (!authenticate(message, "is Clement", mac_key))
 	{
 		cout << "\nsender is not Clement";
@@ -105,60 +111,69 @@ void scriptedConvoTest(SimpleSocket client) {
 	}
 
 	//Agnesse reçoit une question de la part de Clément
+	cout << "\n\n\nReception d'un message de la part de Clement..." << endl;
 	client.recvMessage(message);
+	cout << "Message recu." << endl;
+	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
 		cout << "\nsender is not Clement";
 		return;
 	}
 	message = decrypt(extractMsg(message), agnesse_key);
-	cout << "Message pour Agnesse:\n" << message << endl;
+	cout << "\n\n\nMessage pour Agnesse:\n" << message << endl;
 
 	//Agnesse mentionne a qui elle désire parler
 	getline(cin, message);
+	cout << "\nEnvoie d'un message...\n\n" << endl;
 	message = encrypt(message, agnesse_key);
 	client.sendMessage(message + generateMac(message, mac_key));
+	cout << "\n\n\nMessage envoye a Clement." << endl;
 
 	//Attente de la réponse de Clément
-	cout << "Message pour Agnesse:" << endl;
-	cout << "En attente de la reponse...\n" << endl;
+	cout << "En attente de la reponse de Clement..." << endl;
 	client.recvMessage(message);
+	cout << "Reponse recu." << endl;
+	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
 		cout << "\nsender is not Clement";
 		return;
 	}
 	message = decrypt(extractMsg(message), agnesse_key);
-	cout << "Message pour Agnesse:" << endl;
+	cout << "\n\n\nMessage pour Agnesse:" << endl;
 	cout <<  message << endl;
 
 	//Réception de la clé de session et MAC de session et infos réseau de Bernard
-	cout << "\nEn attente d'une cle de session..." << endl;
+	cout << "\nReception de la cle de session..." << endl;
 
 	client.recvMessage(message);
+	cout << "Message recu." << endl;
+	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
 		cout << "\nsender is not Clement";
 		return;
 	}
 	session_key = decrypt(extractMsg(message), agnesse_key);
-	cout << "Message pour Agnesse:" << endl;
-	cout << "\nCle de session recu..." << endl;
-	cout << "Cle de session: ";
+	cout << "\n\n\nCle de session: ";
 	cout << session_key << endl;
 
+	cout << "Reception de la cle MAC de session..." << endl;
 	client.recvMessage(message);
+	cout << "Message recu..." << endl;
+	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
 		cout << "\nsender is not Clement";
 		return;
 	}
 	session_mac_key = decrypt(extractMsg(message), agnesse_key);
-	cout << "Message pour Agnesse:" << endl;
-	cout << "\nCle de session MAC recu..." << endl;
+	cout << "\n\n\nCle de session MAC recu." << endl;
 	cout << "Cle MAC de session: ";
 	cout << session_mac_key << endl;
 
 	//Réception des information de connection reseau...
-	cout << "Message pour Agnesse:" << endl;
-	cout << "\nEn attente des informations reseau..." << endl;
+	cout << "Reception des informations reseau..." << endl;
 	client.recvMessage(message);
+	cout << "Informations reseau recus." << endl;
+	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
 		cout << "\nsender is not Clement";
 		return;
@@ -168,8 +183,7 @@ void scriptedConvoTest(SimpleSocket client) {
 	bernard_port = informationReseauPort(message);
 	if (bernard_IP.size() > 0 && bernard_port.size() > 0)
 	{
-		cout << "\nInformations reseau recu..." << endl;
-		cout << "Adresse IP: ";
+		cout << "\n\nAdresse IP: ";
 		cout << bernard_IP << endl;
 		cout << "Port: ";
 		cout << bernard_port << endl;
@@ -222,28 +236,32 @@ void runConversationAgnesseBernard(SimpleSocket clientBernard, std::string sessi
 		getline(cin, message);
 
 		if (message == "end") {
+			cout << "\nEnvoie du message...\n\n" << endl;
 			message = encrypt(message, session_key);
 			clientBernard.sendMessage(message + generateMac(message, session_mac_key));
+			cout << "\n\n\nMessage envoye." << endl;
 			break;
 		}
 		else
 		{
+			cout << "\nEnvoie du message...\n\n" << endl;
 			message = encrypt(message, session_key);
 			clientBernard.sendMessage(message + generateMac(message, session_mac_key));
+			cout << "\nMessage envoye." << endl;
 
 			//Agnesse attend un reponse...
 			cout << "\nEn attente de la reception du message..." << endl;
 			clientBernard.recvMessage(message);
-
+			cout << "Message recu." << endl;
+			cout << "Verification et dechiffrement...\n\n" << endl;
 
 			if (!verifyMAC(message, session_mac_key)) {
 				cout << "\nsender is not Bernard";
 				return;
 			}
 			message = decrypt(extractMsg(message), session_key);
-			cout << "Message recu:" << endl;
-			cout << message << endl << endl;
-
+			cout << "\n\nMessage recu: ";
+			cout << message << "\n\n" << endl;
 		}
 		
 	}
