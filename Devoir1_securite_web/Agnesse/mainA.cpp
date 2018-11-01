@@ -69,7 +69,7 @@ void runClient(short nPort, const char * host)
 			catch (const ConnectionException& e)
 			{
 				cout << endl << e.what();
-				this_thread::sleep_for(5s);
+				this_thread::sleep_for(2s);
 			}
 		}
 		cout << "\nConnection successful." << endl;

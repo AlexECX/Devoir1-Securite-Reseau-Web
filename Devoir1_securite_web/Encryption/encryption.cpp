@@ -211,7 +211,7 @@ void reseauFeistel(unsigned char* blockInput, const string& key, unsigned turn_c
 
 
 void vigenere(unsigned char* block, const unsigned char* key,
-		  unsigned lenght)
+		  unsigned length)
 {
 	static char tableauVigenere[256][256];
 	static bool first_iter = true;
@@ -235,7 +235,7 @@ void vigenere(unsigned char* block, const unsigned char* key,
 		}
 	}
 
-	for (unsigned i = 0; i < lenght; i++) {
+	for (unsigned i = 0; i < length; i++) {
 		block[i] = tableauVigenere[block[i]][key[i]];
 	}
 
@@ -244,16 +244,16 @@ void vigenere(unsigned char* block, const unsigned char* key,
 }
 
 void xorSbox(unsigned char* block, const unsigned char* key,
-						unsigned lenght) 
+						unsigned length) 
 {
 	//xor le bloc avec la cl�
-	for (unsigned i = 0; i < lenght; i++) {
+	for (unsigned i = 0; i < length; i++) {
 		block[i] = block[i] ^ key[i];
 	}
 
-	useSBox(block, lenght);
+	useSBox(block, length);
 	return;
-	//return string(reinterpret_cast<const char*>(message), lenght);
+	//return string(reinterpret_cast<const char*>(message), length);
 
 }
 
@@ -361,11 +361,17 @@ bool verifyMAC(const string& str, const string& key) {
 			cout << "succes." << endl;
 			return true;
 		}
+		else
+		{
+			cout << "failed." << endl;
+			return false;
+		}
 		//return  the_MAC.compare(simpleHMCA(the_msg, key)) == 0;
 	}
 	catch (const std::out_of_range& e)
 	{
 		cout << endl << e.what();
+		cout << "\ninvalid MAC." << endl;
 		return false;
 	}
 }
