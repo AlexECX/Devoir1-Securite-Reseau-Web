@@ -174,7 +174,7 @@ void scriptedConvoTest(SimpleSocket client) {
 	cout << "\nEn attente de la connection..." << endl;
 	try
 	{
-		SimpleServerSocket server = SimpleServerSocket((short)stoi(agnesse_port));
+		SimpleServerSocket server = SimpleServerSocket(agnesse_IP.c_str(), (short)stoi(agnesse_port));
 		SimpleSocket clientAgnesse = server.acceptSocket();
 
 		runConversationAgnesseBernard(clientAgnesse, session_key, session_mac_key);

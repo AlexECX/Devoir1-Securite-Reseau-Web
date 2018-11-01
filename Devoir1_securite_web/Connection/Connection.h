@@ -15,7 +15,7 @@ protected:
 	
 	std::shared_ptr<SocketWrap> mySocket_ptr = nullptr;
 	SOCKET		mySocket;
-	SOCKADDR_IN addrInfo;
+	SOCKADDR_IN addrInfo = {0};
 	
 
 public:
@@ -26,6 +26,8 @@ public:
 	virtual ~Connection();
 
 	Connection& operator=(const Connection& other);
+	
+	std::string getName();
 
 	void close();
 

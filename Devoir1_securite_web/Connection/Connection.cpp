@@ -32,6 +32,8 @@ Connection::Connection(const SOCKET& socket)
 	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
 		throw ConnectionException(WSA_ERROR, TRACEBACK);
 	}
+	int tmp = sizeof(addrInfo);
+	getpeername(mySocket, (sockaddr *)&addrInfo, &tmp);
 }
 
 Connection::Connection()
@@ -43,6 +45,8 @@ Connection::Connection()
 	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
 		throw ConnectionException(WSA_ERROR, TRACEBACK);
 	}
+	int tmp = sizeof(addrInfo);
+	getpeername(mySocket, (sockaddr *)&addrInfo, &tmp);
 }
 
 
@@ -54,6 +58,15 @@ Connection & Connection::operator=(const Connection & other) {
 	mySocket_ptr = other.mySocket_ptr;
 	mySocket = mySocket_ptr->getTheSocket();
 	return *this;
+}
+
+string Connection::getName()
+{
+	string name;
+	name.append(inet_ntoa(addrInfo.sin_addr));
+	name.append(":");
+	name.append(to_string(ntohs(addrInfo.sin_port)));
+	return name;
 }
 
 
@@ -162,14 +175,15 @@ int Connection::recvFile(std::string FilePath) {
 		if (nRet == INVALID_SOCKET) {
 			throw ConnectionException(WSA_ERROR, TRACEBACK);
 		}
-		else if (File_size == 0) {
-			cout << "\nfailed to fetch " << FilePath;
-			return 0;
-		}
 		else {
 			offset += nRet;
 		}
 	}
+
+	if (File_size == 0) {
+	cout << "\nfailed to fetch " << FilePath;
+	return 0;
+		}
 
 	ofstream IMG_dest(FilePath.c_str(), ios::binary);
 	if (IMG_dest.fail()) {

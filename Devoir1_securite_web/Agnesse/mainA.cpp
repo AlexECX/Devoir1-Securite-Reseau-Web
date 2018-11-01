@@ -194,13 +194,13 @@ void scriptedConvoTest(SimpleSocket client) {
 	try
 	{
 		bool connected = false;
-		SimpleSocket client = SimpleSocket();
+		SimpleSocket clientB = SimpleSocket();
 
 		while (!connected) {
 			try
 			{
 				cout << "\nconnecting to " + bernard_IP + " on port " << bernard_port;
-				client.connectSocket(bernard_IP.c_str(), stoi(bernard_port));
+				clientB.connectSocket(bernard_IP.c_str(), stoi(bernard_port));
 				connected = true;
 			}
 			catch (const ConnectionException& e)
@@ -209,7 +209,7 @@ void scriptedConvoTest(SimpleSocket client) {
 				this_thread::sleep_for(5s);
 			}
 
-			runConversationAgnesseBernard(client, session_key, session_mac_key);
+			runConversationAgnesseBernard(clientB, session_key, session_mac_key);
 
 		}
 	}
