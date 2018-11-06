@@ -16,6 +16,7 @@ using namespace std;
 void runClient(short nPort, const char* host);
 void scriptedConvoTest(SimpleSocket client);
 void runConversationAgnesseBernard(SimpleSocket clientBernard, std::string, std::string);
+string getFileName(const string& s);
 
 int main(int argc, char **argv)
 {
@@ -109,6 +110,10 @@ void scriptedConvoTest(SimpleSocket client) {
 		cout << "\nsender is not Clement";
 		return;
 	}
+
+	client.recvMessage(message);
+	client.recvFile(message);
+	return;
 
 	//Agnesse reçoit une question de la part de Clément
 	cout << "\n\n\nReception d'un message de la part de Clement..." << endl;
@@ -269,3 +274,18 @@ void runConversationAgnesseBernard(SimpleSocket clientBernard, std::string sessi
 	//Terminaison de la conversation
 	clientBernard.close();
 };
+
+
+string getFileName(const string& s) {
+	char sep = '/';
+
+#ifdef _WIN32
+	sep = '\\';
+#endif
+
+	size_t i = s.rfind(sep, s.length());
+	if (i != string::npos) {
+		return(s.substr(i + 1, s.length() - i));
+	}
+	return(s);
+}

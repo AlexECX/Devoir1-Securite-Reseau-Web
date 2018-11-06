@@ -66,16 +66,12 @@ SimpleSocket SimpleServerSocket::acceptSocket()
 	//
 // Wait for an incoming request
 //
-
-	std::cout << "\nBlocking at accept()";
 	SOCKET listenSocket = accept(mySocket,            // Listening socket
 		NULL,                            // Optional client address
 		NULL);
 	if (listenSocket == INVALID_SOCKET) {
 		throw ConnectionException(WSA_ERROR, TRACEBACK);
 	}
-	else
-		std::cout << "\nConnected";
 
 	return SimpleSocket(listenSocket);
 }

@@ -60,12 +60,23 @@ Connection & Connection::operator=(const Connection & other) {
 	return *this;
 }
 
-string Connection::getName()
+connectionInfo Connection::getIPinfo()
 {
-	string name;
-	name.append(inet_ntoa(addrInfo.sin_addr));
-	name.append(":");
-	name.append(to_string(ntohs(addrInfo.sin_port)));
+	int tmp = sizeof(addrInfo);
+	getpeername(mySocket, (sockaddr *)&addrInfo, &tmp);
+	connectionInfo name;
+	name.IP = inet_ntoa(addrInfo.sin_addr);
+	name.Port = to_string(ntohs(addrInfo.sin_port));
+	return name;
+}
+
+connectionInfo Connection::getIPinfoLocal()
+{
+	int tmp = sizeof(addrInfo);
+	getsockname(mySocket, (sockaddr *)&addrInfo, &tmp);
+	connectionInfo name;
+	name.IP = inet_ntoa(addrInfo.sin_addr);
+	name.Port = to_string(ntohs(addrInfo.sin_port));
 	return name;
 }
 
@@ -77,17 +88,17 @@ void Connection::close()
 
 int Connection::sendFile(string FilePath) {
 	int nRet;
-	unsigned int offset = 0;
-	unsigned int File_size = 0;
+	unsigned offset = 0;
+	unsigned File_size = 0;
 
 	std::ifstream File_source(FilePath.c_str(), std::ios::binary);
 	if (File_source.fail()) {
 		//Send 0 to client, to tell no file was found
 		offset = 0;
 		File_size = 0;
-		while (offset < sizeof(unsigned int)) {
+		while (offset < sizeof(unsigned)) {
 			nRet = send(mySocket, (char*)&File_size + offset, 
-						sizeof(unsigned int), 0);
+						sizeof(unsigned), 0);
 			if (nRet == SOCKET_ERROR) {
 				throw ConnectionException(WSA_ERROR, TRACEBACK);
 			}
@@ -96,18 +107,19 @@ int Connection::sendFile(string FilePath) {
 			}
 		}
 		std::cout << "failed fetch " << FilePath;
+		return 0;
 	}
 	else {
 		// Get the requested file 
 
 		// Get and send file size
 		File_source.seekg(0, std::ios::end);
-		File_size = unsigned int(File_source.tellg());
+		File_size = unsigned(File_source.tellg());
 
 		offset = 0;
-		while (offset < sizeof(unsigned int)) {
+		while (offset < sizeof(unsigned)) {
 			nRet = send(mySocket, (char*)&File_size + offset,
-						sizeof(unsigned int) - offset, 0);
+						sizeof(unsigned) - offset, 0);
 			if (nRet == SOCKET_ERROR) {
 				throw ConnectionException(WSA_ERROR, TRACEBACK);
 			}
@@ -117,13 +129,13 @@ int Connection::sendFile(string FilePath) {
 		}
 
 		// Send file in multiple pakcets
-		unsigned int SentBytes = 0;
-		unsigned int Msg_size = 0;
-		unsigned int Progress = 1;
-		char* File_buffer;
+		unsigned SentBytes = 0;
+		unsigned Msg_size = 0;
+		unsigned Progress = 1;
+		auto File_buffer = std::make_unique<char[]>(5000000);
 
 		/** Tool for progress bar 1/2*/
-		double ProgresStep = (double)File_size / 10.0;
+		double ProgresStep = static_cast<double>(File_size)/ 10.0;
 		double Progression = 0;
 		cout << "Progression '*'x10 [ ";
 		/**/
@@ -136,13 +148,11 @@ int Connection::sendFile(string FilePath) {
 				Msg_size = File_size - SentBytes;
 			}
 
-			File_buffer = new char[Msg_size];
 			File_source.seekg(SentBytes, std::ios::beg);
-			File_source.read(File_buffer, Msg_size);
+			File_source.read(File_buffer.get(), Msg_size);
 
-			sendMessage(string(File_buffer, Msg_size));
+			sendMessage(string(File_buffer.get(), Msg_size));
 			SentBytes += Msg_size;
-			delete[] File_buffer;
 
 			/** Tool for progress bar 2 / 2*/
 			if (SentBytes > ProgresStep*Progression) {
@@ -157,22 +167,22 @@ int Connection::sendFile(string FilePath) {
 			/**/
 		}
 		File_source.close();
-		File_buffer = nullptr;
-	}
 
-	return 1;
+		return 1;
+	}
+	
 }
 
 int Connection::recvFile(std::string FilePath) {
 	string FileContent;
 	int nRet;
-	unsigned int File_size;
+	unsigned File_size;
 
-	unsigned int offset = 0;
-	while (offset < sizeof(unsigned int)) {
+	unsigned offset = 0;
+	while (offset < sizeof(unsigned)) {
 		nRet = recv(mySocket, (char*)&File_size + offset,
-					sizeof(unsigned int) - offset, 0);
-		if (nRet == INVALID_SOCKET) {
+					sizeof(unsigned) - offset, 0);
+		if (nRet == INVALID_SOCKET || nRet == 0) {
 			throw ConnectionException(WSA_ERROR, TRACEBACK);
 		}
 		else {
@@ -192,9 +202,9 @@ int Connection::recvFile(std::string FilePath) {
 	}
 
 	// Send file in multiple pakcets
-	unsigned int RecvBytes = 0;
-	unsigned int Progress = 1;
-	unsigned int Msg_size = 0;
+	unsigned RecvBytes = 0;
+	unsigned Progress = 1;
+	unsigned Msg_size = 0;
 	IMG_dest.seekp(0, ios::beg);
 
 	/** Tool for progress bar 1/2*/
@@ -236,13 +246,13 @@ int Connection::recvFile(std::string FilePath) {
 
 bool Connection::sendMessage(const string &message) {
 	int nRet = 0;
-	unsigned int file_size = message.size();
+	unsigned file_size = message.size();
 	const char* send_file = message.c_str();
-	unsigned int offset = 0;
+	unsigned offset = 0;
 
-	while (offset < sizeof(unsigned int)) {
+	while (offset < sizeof(unsigned)) {
 		nRet = send(mySocket, (char*)&file_size + offset, 
-					sizeof(unsigned int) - offset, 0);
+					sizeof(unsigned) - offset, 0);
 		if (nRet == SOCKET_ERROR) {
 			throw ConnectionException(WSA_ERROR, TRACEBACK);
 		}
@@ -251,8 +261,8 @@ bool Connection::sendMessage(const string &message) {
 		}
 	}
 	
-	unsigned int SentBytes = 0;
-	unsigned int Msg_size = 0;
+	unsigned SentBytes = 0;
+	unsigned Msg_size = 0;
 
 	while (SentBytes < file_size) {
 		if (file_size - SentBytes >= 10000) {
@@ -280,15 +290,15 @@ bool Connection::sendMessage(const string &message) {
 
 bool Connection::recvMessage(string &message) {
 	int nRet;
-	unsigned int Msg_size = 0;
-	unsigned int offset = 0;
+	unsigned Msg_size = 0;
+	unsigned offset = 0;
 
 	message.clear();
 
-	while (offset < sizeof(unsigned int)) {
+	while (offset < sizeof(unsigned)) {
 		nRet = recv(mySocket, (char*)&Msg_size + offset,                                        
-					sizeof(unsigned int) - offset, 0);                                           
-		if (nRet == INVALID_SOCKET) {
+					sizeof(unsigned) - offset, 0);                                           
+		if (nRet == INVALID_SOCKET || nRet == 0) {
 			throw ConnectionException(WSA_ERROR, TRACEBACK);
 		}
 		else {
@@ -296,9 +306,10 @@ bool Connection::recvMessage(string &message) {
 		}
 	}
 	
-	unsigned int file_size = Msg_size;
-	unsigned int ReceivedBytes = 0;
+	unsigned file_size = Msg_size;
+	unsigned ReceivedBytes = 0;
 	char reception[10000];
+	//char* reception = new char[file_size];
 	//memset(reception, '\0', 10000);
 	
 	// If the file is bigger than "X amount", will send in multiple packages
@@ -315,14 +326,14 @@ bool Connection::recvMessage(string &message) {
 		offset = 0;
 		while (offset < Msg_size) {
 			nRet = recv(mySocket, reception + offset, Msg_size - offset, 0);
-			if (nRet == INVALID_SOCKET) {
+			if (nRet == INVALID_SOCKET || nRet == 0) {
 				throw ConnectionException(WSA_ERROR, TRACEBACK);
 			}
 			else {
-				message.append(reception, Msg_size);
 				offset += nRet;
 			}
 		}
+		message.append(reception, Msg_size);
 		ReceivedBytes += Msg_size;
 	}
 

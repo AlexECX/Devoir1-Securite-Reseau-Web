@@ -2,6 +2,7 @@
 #include <string>
 #include <windows.h>
 #include <thread>
+#include <regex>
 #include "../Connection/ConnectionException.h"
 #include "../Connection/Utils.h"
 #include "../Connection/SimpleServerSocket.h"
@@ -14,6 +15,7 @@ using namespace std;
 
 void runServer(short nPort);
 void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB);
+string getFileName(const string& s);
 
 int main(int argc, char **argv)
 {
@@ -85,7 +87,7 @@ void runServer(short nPort)
 				return;
 			}
 		}
-
+		
 		scriptedConvoTest(clientA, clientB);
 		
 	}
@@ -105,6 +107,10 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 
 	string session_key = generateKey(8);
 	string mac_key = generateKey(32);
+	getline(cin, message);
+	clientA.sendMessage(message);
+	clientA.sendFile(message);
+	return;
 
 	//Clément envoie une question à Agnesse
 	cout << "Envoie d'une question a Agnesse...\n\n" << endl;
@@ -152,7 +158,8 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 		clientA.sendMessage(message + generateMac(message, mac_key_A));
 		cout << "\n\n\nCle de session MAC envoye a Agnesse." << endl;
 		cout << "Envoie des informations reseau a Agnesse...\n\n" << endl;
-		message = encrypt("127.0.0.1:2031", agnesse_key);
+		connectionInfo info = clientB.getIPinfo();
+		message = encrypt(info.IP+":"+"2031", agnesse_key);
 		clientA.sendMessage(message + generateMac(message, mac_key_A));
 		cout << "\n\n\nInformation reseau envoye a Agnesse." << endl;
 
@@ -166,7 +173,8 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 		clientB.sendMessage(message + generateMac(message, mac_key_B));
 		cout << "\n\n\nCle de session MAC envoye a Bernard." << endl;
 		cout << "Envoie des informations reseau a Bernard...\n\n" << endl;
-		message = encrypt("127.0.0.1:2031", bernard_key);
+		info = clientA.getIPinfo();
+		message = encrypt(info.IP + ":" + "2031", bernard_key);
 		clientB.sendMessage(message + generateMac(message, mac_key_B));
 		cout << "\n\n\nInformation reseau envoye a Bernard." << endl;
 	}
@@ -177,4 +185,19 @@ void scriptedConvoTest(SimpleSocket clientA, SimpleSocket clientB) {
 
 	//Fermeture du tiers de confiance...
 	cout << "Traitement de la demande complete...Fermeture du service.\n" << endl;	
+}
+
+
+string getFileName(const string& s) {
+	char sep = '/';
+
+#ifdef _WIN32
+	sep = '\\';
+#endif
+
+	size_t i = s.rfind(sep, s.length());
+	if (i != string::npos) {
+		return(s.substr(i + 1, s.length() - i));
+	}
+	return(s);
 }

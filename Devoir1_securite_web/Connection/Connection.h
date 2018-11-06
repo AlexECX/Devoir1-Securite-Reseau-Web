@@ -6,6 +6,11 @@
 
 class SocketWrap;
 
+struct connectionInfo {
+	std::string IP;
+	std::string Port;
+};
+
 
 class Connection
 {
@@ -27,7 +32,9 @@ public:
 
 	Connection& operator=(const Connection& other);
 	
-	std::string getName();
+	connectionInfo getIPinfo();
+
+	connectionInfo getIPinfoLocal();
 
 	void close();
 

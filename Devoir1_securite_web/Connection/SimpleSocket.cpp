@@ -33,7 +33,6 @@ void SimpleSocket::connectSocket(const char * szServer, short cPort)
 
 	addrInfo.sin_addr.s_addr = inet_addr(szServer);
 	if (addrInfo.sin_addr.s_addr == INADDR_NONE) {
-		cout << endl << szServer << " is not IPv4, hostname?";
 		lpHostEntry = gethostbyname(szServer);
 		if (lpHostEntry == NULL) {
 			throw ConnectionException(string(szServer)+" invalid parameter", TRACEBACK);
