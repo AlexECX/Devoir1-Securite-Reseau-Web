@@ -1,11 +1,8 @@
 #pragma once
 #include <string>
 #include <stdio.h>
+#include "WSA_Utils.h"
 
-
-void initWSA();
-
-std::string formateWSAError(int error_code);
 
 //Parse un string pour retrouver les information IP adress
 std::string informationReseauIPAddress(std::string);

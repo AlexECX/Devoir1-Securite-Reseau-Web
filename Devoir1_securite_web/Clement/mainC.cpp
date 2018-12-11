@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 
 #endif // HARD_CODED
 
-	initWSA();
+	WSA_Utils::initWSA();
 
 	runServer(nPort);
 
@@ -74,7 +74,7 @@ void runServer(unsigned nPort)
 				clientA = client;
 				message = "is Clement";
 				cout << "Envoie d'un message a Agnesse...\n\n" << endl;
-				clientA.sendMsg_noExcept(message + generateMac(message, mac_key_A));
+				clientA.sendMsg(message + generateMac(message, mac_key_A));
 				cout << "\n\n\nMessage envoye.\n" << endl;
 			}
 			else if (authenticate(message, "is Bernard", mac_key_B)) {
@@ -82,7 +82,7 @@ void runServer(unsigned nPort)
 				clientB = client;
 				message = "is Clement";
 				cout << "Envoie d'un message a Bernard...\n\n" << endl;
-				clientB.sendMsg_noExcept(message + generateMac(message, mac_key_B));
+				clientB.sendMsg(message + generateMac(message, mac_key_B));
 				cout << "\n\n\nMessage envoye." << endl;
 
 			}
@@ -116,7 +116,7 @@ void scriptedConvoTest(Socket clientA, Socket clientB) {
 	cout << "Envoie d'une question a Agnesse...\n\n" << endl;
 	message = "Clement demande:\nA qui desires-tu parler Agnesse?";
 	message = encrypt(message, agnesse_key);
-	clientA.sendMsg_noExcept(message + generateMac(message, mac_key_A));
+	clientA.sendMsg(message + generateMac(message, mac_key_A));
 	cout << "\n\n\nMessage envoye." << endl;
 
 	//Clément reçoit la réponse d'Agnesse
@@ -140,42 +140,42 @@ void scriptedConvoTest(Socket clientA, Socket clientB) {
 		message = "Clement vous confirme que " + message + " est de confiance.\nLa conversation pourra debuter.\nVoici les informations pertinentes pour la communication.";
 		cout << "Envoie du message a Agnesse...\n\n" << endl;
 		message = encrypt(message, agnesse_key);
-		clientA.sendMsg_noExcept(message + generateMac(message, mac_key_A));
+		clientA.sendMsg(message + generateMac(message, mac_key_A));
 		cout << "\n\n\nMessage envoye." << endl;
 		message = "Agnesse desire communiquer avec vous. Agnesse est de confiance.\nVoici les information de connection...";
 		cout << "Envoie du message a Bernard...\n\n" << endl;
 		message = encrypt(message, bernard_key);
-		clientB.sendMsg_noExcept(message + generateMac(message, mac_key_B));
+		clientB.sendMsg(message + generateMac(message, mac_key_B));
 		cout << "\n\n\nMessage envoye." << endl;
 
 		//Envoie des clés de session Agnesse
 		cout << "Envoie de la cle de session a Agnesse...\n\n" << endl;
 		message = encrypt(session_key, agnesse_key);
-		clientA.sendMsg_noExcept(message + generateMac(message, mac_key_A));
+		clientA.sendMsg(message + generateMac(message, mac_key_A));
 		cout << "\n\n\nCle de session envoye a Agnesse." << endl;
 		cout << "Envoie de la cle de session MAC a Agnesse...\n\n" << endl;
 		message = encrypt(mac_key, agnesse_key);
-		clientA.sendMsg_noExcept(message + generateMac(message, mac_key_A));
+		clientA.sendMsg(message + generateMac(message, mac_key_A));
 		cout << "\n\n\nCle de session MAC envoye a Agnesse." << endl;
 		cout << "Envoie des informations reseau a Agnesse...\n\n" << endl;
 		connectionInfo info = clientB.getIPinfo();
 		message = encrypt(info.IP+":"+"2031", agnesse_key);
-		clientA.sendMsg_noExcept(message + generateMac(message, mac_key_A));
+		clientA.sendMsg(message + generateMac(message, mac_key_A));
 		cout << "\n\n\nInformation reseau envoye a Agnesse." << endl;
 
 		//Envoie des clés de session Bernard
 		cout << "Envoie de la cle de session a Bernard...\n\n" << endl;
 		message = encrypt(session_key, bernard_key);
-		clientB.sendMsg_noExcept(message + generateMac(message, mac_key_B));
+		clientB.sendMsg(message + generateMac(message, mac_key_B));
 		cout << "\n\n\nCle de session envoye a Bernard." << endl;
 		cout << "Envoie de la cle de session MAC a Bernard...\n\n" << endl;
 		message = encrypt(mac_key, bernard_key);
-		clientB.sendMsg_noExcept(message + generateMac(message, mac_key_B));
+		clientB.sendMsg(message + generateMac(message, mac_key_B));
 		cout << "\n\n\nCle de session MAC envoye a Bernard." << endl;
 		cout << "Envoie des informations reseau a Bernard...\n\n" << endl;
 		info = clientA.getIPinfo();
 		message = encrypt(info.IP + ":" + "2031", bernard_key);
-		clientB.sendMsg_noExcept(message + generateMac(message, mac_key_B));
+		clientB.sendMsg(message + generateMac(message, mac_key_B));
 		cout << "\n\n\nInformation reseau envoye a Bernard." << endl;
 	}
 	else

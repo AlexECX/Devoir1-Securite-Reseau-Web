@@ -1,7 +1,6 @@
 #include "Socket.h"
 #include "SocketException.h"
 #include <string>
-#include <iostream>
 
 using namespace std;
 
@@ -27,11 +26,11 @@ Socket::~Socket()
 bool Socket::connectSocket(const string& server_addr, unsigned cPort)
 {
 	addrInfo.sin_family = this->af;
-	addrInfo.sin_port = htons(cPort);
+	addrInfo.sin_port = ::htons(cPort);
 
-	addrInfo.sin_addr.s_addr = inet_addr(server_addr.c_str());
+	addrInfo.sin_addr.s_addr = ::inet_addr(server_addr.c_str());
 	if (addrInfo.sin_addr.s_addr == INADDR_NONE) {
-		LPHOSTENT lpHostEntry = gethostbyname(server_addr.c_str());
+		LPHOSTENT lpHostEntry = ::gethostbyname(server_addr.c_str());
 		if (lpHostEntry == NULL) {
 			throw SocketException(server_addr +" invalid parameter", TRACEBACK);
 		}
@@ -40,7 +39,7 @@ bool Socket::connectSocket(const string& server_addr, unsigned cPort)
 		}
 	}
 
-	if (connect(mySocket, (LPSOCKADDR)&addrInfo, sizeof(struct sockaddr)) == SOCKET_ERROR) {
+	if (::connect(mySocket, (LPSOCKADDR)&addrInfo, sizeof(struct sockaddr)) == SOCKET_ERROR) {
 		this->socketError(WSA_ERROR, __FUNCTION__);
 		return false;
 	}

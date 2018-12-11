@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 
 #endif // HARD_CODED
 
-	initWSA();
+	WSA_Utils::initWSA();
 
 	runClient(nPort, host);
 
@@ -93,7 +93,7 @@ void scriptedConvoTest(Socket client) {
 	cout << "Authentification de Bernard aupres de Clement..." << endl;
 	cout << "Envoie d'un message..." << endl;
 	message = "is Bernard";
-	client.sendMsg_noExcept(message + generateMac(message, mac_key));
+	client.sendMsg(message + generateMac(message, mac_key));
 	cout << "\n\n\nMessage envoye a Clement." << endl;
 	cout << "Identification de Clement...." << endl;
 	client.recvMsg(message);
@@ -213,7 +213,7 @@ void runConversationAgnesseBernard(Socket clientAgnesse, std::string session_key
 			//Simplement pour la condition du while
 			cout << "\nEnvoie du message...\n\n" << endl;
 			message = encrypt(message, session_key);
-			clientAgnesse.sendMsg_noExcept(message + generateMac(message, session_mac_key));
+			clientAgnesse.sendMsg(message + generateMac(message, session_mac_key));
 			cout << "\n\n\nMessage envoye." << endl;
 			break;
 		}
@@ -221,7 +221,7 @@ void runConversationAgnesseBernard(Socket clientAgnesse, std::string session_key
 		{
 			cout << "\nEnvoie du message...\n\n" << endl;
 			message = encrypt(message, session_key);
-			clientAgnesse.sendMsg_noExcept(message + generateMac(message, session_mac_key));
+			clientAgnesse.sendMsg(message + generateMac(message, session_mac_key));
 			cout << "\nMessage envoye." << endl;
 		}
 

@@ -1,8 +1,11 @@
 #pragma once
 #include <winsock.h>
 #include <string>
-#include "SocketException.h"
 #include <memory>  
+#include "WSA_Utils.h"
+
+#define TRACEBACK __FILE__, __LINE__, __FUNCTION__
+
 
 class SocketWrap;
 
@@ -39,13 +42,13 @@ public:
 
 	connectionInfo getIPinfoLocal();
 
-	std::string getSocketErr() { return this->socket_err; }
+	std::string getSocketErr();
 
-	int getWSAError() { return WSAGetLastError(); }
+	bool shutdownSocket(int how);
 
 	void close();
 
-	bool valid_socket() { return this->is_valid; }
+	bool valid_socket() { return mySocket > 0; }
 
 	bool sendFile(std::string FilePath);
 
@@ -53,13 +56,13 @@ public:
 
 	//permet d'envoyer un fichier. Si trop grand,
 	//l'envoie en plusieurs paquets.
-	bool sendMsg_noExcept_noExcept(const std::string &message);
+	bool sendMsg_noExcept(const std::string &message);
 
 	//permet de recevoir un fichier. Si trop grand,
 	//est pret a recevoir en plusieurs paquets.
 	bool recvMsg_noExcept(std::string &message);
 
-	void sendMsg_noExcept(const std::string &message);
+	void sendMsg(const std::string &message);
 
 	void recvMsg(std::string &message);
 

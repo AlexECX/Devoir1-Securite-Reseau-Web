@@ -1,12 +1,7 @@
 #pragma once
 #include <stdexcept>
 #include <winsock.h>
-#include "Utils.h"
 
-#define WSA_ERROR "Winsock Error "+formateWSAError(WSAGetLastError())
-#define TRACEBACK __FILE__, __LINE__, __FUNCTION__
-
-std::string formatedWSAError();
 
 class SocketException : public std::runtime_error
 {
