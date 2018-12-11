@@ -18,22 +18,22 @@
     <ClCompile Include="mainA.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\Encryption\encryption.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
     <ClCompile Include="..\Encryption\base64.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\Connection\Connection.cpp">
+    <ClCompile Include="..\Encryption\encryption.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\Connection\ConnectionException.cpp">
+    <ClCompile Include="..\Connection\BaseSocket.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\Connection\SimpleServerSocket.cpp">
+    <ClCompile Include="..\Connection\ServerSocket.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="..\Connection\SimpleSocket.cpp">
+    <ClCompile Include="..\Connection\Socket.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Connection\SocketException.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
     <ClCompile Include="..\Connection\Utils.cpp">
@@ -47,16 +47,16 @@
     <ClInclude Include="..\Encryption\encryption.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\Connection\Connection.h">
+    <ClInclude Include="..\Connection\BaseSocket.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\Connection\ConnectionException.h">
+    <ClInclude Include="..\Connection\ServerSocket.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\Connection\SimpleServerSocket.h">
+    <ClInclude Include="..\Connection\Socket.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="..\Connection\SimpleSocket.h">
+    <ClInclude Include="..\Connection\SocketException.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
     <ClInclude Include="..\Connection\Utils.h">

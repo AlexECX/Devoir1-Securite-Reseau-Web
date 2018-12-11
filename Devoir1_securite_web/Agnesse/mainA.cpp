@@ -2,9 +2,9 @@
 #include <string>
 #include <windows.h>
 #include <thread>
-#include "../Connection/ConnectionException.h"
+#include "../Connection/SocketException.h"
 #include "../Connection/Utils.h"
-#include "../Connection/SimpleSocket.h"
+#include "../Connection/Socket.h"
 #include "../Encryption/encryption.h"
 
 using namespace std;
@@ -13,15 +13,15 @@ using namespace std;
 #define HOST "127.0.0.1" //Can be Name or IP address
 #define PORT 2030
 
-void runClient(short nPort, const char* host);
-void scriptedConvoTest(SimpleSocket client);
-void runConversationAgnesseBernard(SimpleSocket clientBernard, std::string, std::string);
+void runClient(unsigned nPort, const string& host);
+void scriptedConvoTest(Socket client);
+void runConversationAgnesseBernard(Socket clientBernard, std::string, std::string);
 string getFileName(const string& s);
 
 int main(int argc, char **argv)
 {
-	short nPort;
-	const char* host;
+	unsigned nPort;
+	string host;
 
 	//
 	// Check for the host and port arguments
@@ -52,32 +52,29 @@ int main(int argc, char **argv)
 
 }
 
-void runClient(short nPort, const char * host)
+void runClient(unsigned nPort, const string& host)
 {
 
 	try
 	{
-		bool connected = false;
-		SimpleSocket client = SimpleSocket();
+		Socket client = Socket();
+		if (!client.valid_socket())
+			throw SocketException(client.getSocketErr(), TRACEBACK);
 
-		while (!connected) {
-			try
-			{
-				cout << "\nconnecting to " + string(host) + " on port " << nPort;
-				client.connectSocket(host, nPort);
-				connected = true;
+		while (true) {
+			cout << "\nconnecting to " + string(host) + " on port " << nPort;
+			if (client.connectSocket(host, nPort)) {
+				break;
 			}
-			catch (const ConnectionException& e)
-			{
-				cout << endl << e.what();
+			else {
 				this_thread::sleep_for(2s);
 			}
 		}
 		cout << "\nConnection successful." << endl;
 		scriptedConvoTest(client);
 
-		}
-	catch (const ConnectionException& e)
+	}
+	catch (const SocketException& e)
 	{
 		cout << endl << e.what();
 	}
@@ -85,7 +82,7 @@ void runClient(short nPort, const char * host)
 
 }
 
-void scriptedConvoTest(SimpleSocket client) {
+void scriptedConvoTest(Socket client) {
 	string agnesse_key = "gadgettegdag";
 	string session_key = "";
 	string mac_key = "mac_key_A";
@@ -99,10 +96,10 @@ void scriptedConvoTest(SimpleSocket client) {
 	cout << "\nAuthentification d'Agnesse aupres de Clement..." << endl;
 	cout << "Envoie d'un message..." << endl;
 	message = "is Agnesse";
-	client.sendMessage(message + generateMac(message, mac_key));
+	client.sendMsg_noExcept(message + generateMac(message, mac_key));
 	cout << "\n\n\nMessage envoye a Clement." << endl;
 	cout << "Identification de Clement...." << endl;
-	client.recvMessage(message);
+	client.recvMsg(message);
 	cout << "Reponse recu." << endl;
 	cout << "Authentification...\n\n" << endl;
 	if (!authenticate(message, "is Clement", mac_key))
@@ -111,13 +108,10 @@ void scriptedConvoTest(SimpleSocket client) {
 		return;
 	}
 
-	client.recvMessage(message);
-	client.recvFile(message);
-	return;
 
 	//Agnesse reçoit une question de la part de Clément
 	cout << "\n\n\nReception d'un message de la part de Clement..." << endl;
-	client.recvMessage(message);
+	client.recvMsg(message);
 	cout << "Message recu." << endl;
 	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
@@ -131,12 +125,12 @@ void scriptedConvoTest(SimpleSocket client) {
 	getline(cin, message);
 	cout << "\nEnvoie d'un message...\n\n" << endl;
 	message = encrypt(message, agnesse_key);
-	client.sendMessage(message + generateMac(message, mac_key));
+	client.sendMsg_noExcept(message + generateMac(message, mac_key));
 	cout << "\n\n\nMessage envoye a Clement." << endl;
 
 	//Attente de la réponse de Clément
 	cout << "En attente de la reponse de Clement..." << endl;
-	client.recvMessage(message);
+	client.recvMsg(message);
 	cout << "Reponse recu." << endl;
 	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
@@ -150,7 +144,7 @@ void scriptedConvoTest(SimpleSocket client) {
 	//Réception de la clé de session et MAC de session et infos réseau de Bernard
 	cout << "\nReception de la cle de session..." << endl;
 
-	client.recvMessage(message);
+	client.recvMsg(message);
 	cout << "Message recu." << endl;
 	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
@@ -162,7 +156,7 @@ void scriptedConvoTest(SimpleSocket client) {
 	cout << session_key << endl;
 
 	cout << "Reception de la cle MAC de session..." << endl;
-	client.recvMessage(message);
+	client.recvMsg(message);
 	cout << "Message recu..." << endl;
 	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
@@ -176,7 +170,7 @@ void scriptedConvoTest(SimpleSocket client) {
 
 	//Réception des information de connection reseau...
 	cout << "Reception des informations reseau..." << endl;
-	client.recvMessage(message);
+	client.recvMsg(message);
 	cout << "Informations reseau recus." << endl;
 	cout << "Verification et dechiffrement...\n\n" << endl;
 	if (!verifyMAC(message, mac_key)) {
@@ -199,7 +193,7 @@ void scriptedConvoTest(SimpleSocket client) {
 	try
 	{
 		bool connected = false;
-		SimpleSocket clientB = SimpleSocket();
+		Socket clientB = Socket();
 
 		while (!connected) {
 			try
@@ -208,7 +202,7 @@ void scriptedConvoTest(SimpleSocket client) {
 				clientB.connectSocket(bernard_IP.c_str(), stoi(bernard_port));
 				connected = true;
 			}
-			catch (const ConnectionException& e)
+			catch (const SocketException& e)
 			{
 				cout << endl << e.what();
 				this_thread::sleep_for(5s);
@@ -218,13 +212,13 @@ void scriptedConvoTest(SimpleSocket client) {
 
 		}
 	}
-	catch (const ConnectionException& e)
+	catch (const SocketException& e)
 	{
 		cout << endl << e.what();
 	}
 }
 
-void runConversationAgnesseBernard(SimpleSocket clientBernard, std::string session_key, std::string session_mac_key)
+void runConversationAgnesseBernard(Socket clientBernard, std::string session_key, std::string session_mac_key)
 {
 	string message = "";
 
@@ -243,7 +237,7 @@ void runConversationAgnesseBernard(SimpleSocket clientBernard, std::string sessi
 		if (message == "end") {
 			cout << "\nEnvoie du message...\n\n" << endl;
 			message = encrypt(message, session_key);
-			clientBernard.sendMessage(message + generateMac(message, session_mac_key));
+			clientBernard.sendMsg_noExcept(message + generateMac(message, session_mac_key));
 			cout << "\n\n\nMessage envoye." << endl;
 			break;
 		}
@@ -251,12 +245,12 @@ void runConversationAgnesseBernard(SimpleSocket clientBernard, std::string sessi
 		{
 			cout << "\nEnvoie du message...\n\n" << endl;
 			message = encrypt(message, session_key);
-			clientBernard.sendMessage(message + generateMac(message, session_mac_key));
+			clientBernard.sendMsg_noExcept(message + generateMac(message, session_mac_key));
 			cout << "\nMessage envoye." << endl;
 
 			//Agnesse attend un reponse...
 			cout << "\nEn attente de la reception du message..." << endl;
-			clientBernard.recvMessage(message);
+			clientBernard.recvMsg(message);
 			cout << "Message recu." << endl;
 			cout << "Verification et dechiffrement...\n\n" << endl;
 

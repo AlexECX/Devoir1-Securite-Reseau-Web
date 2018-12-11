@@ -1,5 +1,5 @@
-#include "Connection.h"
-#include "ConnectionException.h"
+#include "BaseSocket.h"
+#include "SocketException.h"
 #include <sstream>
 #include <string>
 #include <iostream>
@@ -25,42 +25,61 @@ public:
 	}
 };
 
-Connection::Connection(const SOCKET& socket)
+
+BaseSocket::BaseSocket(const SOCKET& socket)
 {
 	mySocket_ptr = make_shared<SocketWrap>(socket);
 	mySocket = (mySocket_ptr->getTheSocket());
 	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
-		throw ConnectionException(WSA_ERROR, TRACEBACK);
+		this->is_valid = false;
+		this->socketError(WSA_ERROR, __FUNCTION__);
+		//throw SocketException(WSA_ERROR, __FUNCTION__);
 	}
-	int tmp = sizeof(addrInfo);
-	getpeername(mySocket, (sockaddr *)&addrInfo, &tmp);
+	else{
+		this->is_valid = true;
+	}
 }
 
-Connection::Connection()
+
+BaseSocket::BaseSocket(int af, int type, int protocol)
 {
-	mySocket_ptr = make_shared<SocketWrap>(socket(AF_INET, SOCK_STREAM, IPPROTO_TCP));
+	this->af = af;
+	this->type = type;
+	this->protocol = protocol;
+	mySocket_ptr = make_shared<SocketWrap>(socket(af, type, protocol));
 	mySocket = (mySocket_ptr->getTheSocket());
-	// Address family // Socket type // Protocol
 
 	if (mySocket == INVALID_SOCKET || mySocket == SOCKET_ERROR) {
-		throw ConnectionException(WSA_ERROR, TRACEBACK);
+		this->is_valid = false;
+		this->socketError(WSA_ERROR, __FUNCTION__);
+		//throw SocketException(WSA_ERROR, __FUNCTION__);
 	}
-	int tmp = sizeof(addrInfo);
-	getpeername(mySocket, (sockaddr *)&addrInfo, &tmp);
+	else {
+		this->is_valid = true;
+	}
 }
 
 
-Connection::~Connection()
+BaseSocket::~BaseSocket()
 {
 }
 
-Connection & Connection::operator=(const Connection & other) {
+BaseSocket & BaseSocket::operator=(const BaseSocket & other) {
 	mySocket_ptr = other.mySocket_ptr;
 	mySocket = mySocket_ptr->getTheSocket();
 	return *this;
 }
 
-connectionInfo Connection::getIPinfo()
+
+void BaseSocket::socketError(const string& msg, string f)
+{
+	this->socket_err.append(
+		"\n" + f +" "+ msg
+	);
+}
+
+
+connectionInfo BaseSocket::getIPinfo()
 {
 	int tmp = sizeof(addrInfo);
 	getpeername(mySocket, (sockaddr *)&addrInfo, &tmp);
@@ -70,7 +89,7 @@ connectionInfo Connection::getIPinfo()
 	return name;
 }
 
-connectionInfo Connection::getIPinfoLocal()
+connectionInfo BaseSocket::getIPinfoLocal()
 {
 	int tmp = sizeof(addrInfo);
 	getsockname(mySocket, (sockaddr *)&addrInfo, &tmp);
@@ -81,12 +100,12 @@ connectionInfo Connection::getIPinfoLocal()
 }
 
 
-void Connection::close()
+void BaseSocket::close()
 {
 	closesocket(mySocket);
 }
 
-int Connection::sendFile(string FilePath) {
+bool BaseSocket::sendFile(string FilePath) {
 	int nRet;
 	unsigned offset = 0;
 	unsigned File_size = 0;
@@ -100,7 +119,9 @@ int Connection::sendFile(string FilePath) {
 			nRet = send(mySocket, (char*)&File_size + offset, 
 						sizeof(unsigned), 0);
 			if (nRet == SOCKET_ERROR) {
-				throw ConnectionException(WSA_ERROR, TRACEBACK);
+				this->socketError(WSA_ERROR, __FUNCTION__);
+				return false;
+				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
 				offset += nRet;
@@ -121,14 +142,16 @@ int Connection::sendFile(string FilePath) {
 			nRet = send(mySocket, (char*)&File_size + offset,
 						sizeof(unsigned) - offset, 0);
 			if (nRet == SOCKET_ERROR) {
-				throw ConnectionException(WSA_ERROR, TRACEBACK);
+				this->socketError(WSA_ERROR, __FUNCTION__);
+				return false;
+				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
 				offset += nRet;
 			}
 		}
 
-		// Send file in multiple pakcets
+		// Send file in multiple packets
 		unsigned SentBytes = 0;
 		unsigned Msg_size = 0;
 		unsigned Progress = 1;
@@ -151,7 +174,7 @@ int Connection::sendFile(string FilePath) {
 			File_source.seekg(SentBytes, std::ios::beg);
 			File_source.read(File_buffer.get(), Msg_size);
 
-			sendMessage(string(File_buffer.get(), Msg_size));
+			sendMsg_noExcept(string(File_buffer.get(), Msg_size));
 			SentBytes += Msg_size;
 
 			/** Tool for progress bar 2 / 2*/
@@ -168,12 +191,12 @@ int Connection::sendFile(string FilePath) {
 		}
 		File_source.close();
 
-		return 1;
+		return true;
 	}
 	
 }
 
-int Connection::recvFile(std::string FilePath) {
+bool BaseSocket::recvFile(std::string FilePath) {
 	string FileContent;
 	int nRet;
 	unsigned File_size;
@@ -183,7 +206,9 @@ int Connection::recvFile(std::string FilePath) {
 		nRet = recv(mySocket, (char*)&File_size + offset,
 					sizeof(unsigned) - offset, 0);
 		if (nRet == INVALID_SOCKET || nRet == 0) {
-			throw ConnectionException(WSA_ERROR, TRACEBACK);
+			this->socketError(WSA_ERROR, __FUNCTION__);
+			return false;
+			//throw SocketException(WSA_ERROR, __FUNCTION__);
 		}
 		else {
 			offset += nRet;
@@ -221,7 +246,7 @@ int Connection::recvFile(std::string FilePath) {
 			Msg_size = File_size - RecvBytes;
 		}
 
-		if (recvMessage(FileContent)) {
+		if (recvMsg_noExcept(FileContent)) {
 			// Write to local files
 			IMG_dest.write(FileContent.c_str(), FileContent.size());
 			RecvBytes += Msg_size;
@@ -241,10 +266,10 @@ int Connection::recvFile(std::string FilePath) {
 	}
 	IMG_dest.close();
 
-	return 1;
+	return true;
 }
 
-bool Connection::sendMessage(const string &message) {
+bool BaseSocket::sendMsg_noExcept_noExcept(const string &message) {
 	int nRet = 0;
 	unsigned file_size = message.size();
 	const char* send_file = message.c_str();
@@ -254,7 +279,9 @@ bool Connection::sendMessage(const string &message) {
 		nRet = send(mySocket, (char*)&file_size + offset, 
 					sizeof(unsigned) - offset, 0);
 		if (nRet == SOCKET_ERROR) {
-			throw ConnectionException(WSA_ERROR, TRACEBACK);
+			this->socketError(WSA_ERROR, __FUNCTION__);
+			return false;
+			//throw SocketException(WSA_ERROR, __FUNCTION__);
 		}
 		else {
 			offset += nRet;
@@ -276,7 +303,9 @@ bool Connection::sendMessage(const string &message) {
 		while (offset < Msg_size) {
 			nRet = send(mySocket, send_file + SentBytes + offset, Msg_size - offset, 0);
 			if (nRet == SOCKET_ERROR) {
-				throw ConnectionException(WSA_ERROR, TRACEBACK);
+				this->socketError(WSA_ERROR, __FUNCTION__);
+				return false;
+				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
 				offset += nRet;
@@ -288,7 +317,7 @@ bool Connection::sendMessage(const string &message) {
 	return true;
 }
 
-bool Connection::recvMessage(string &message) {
+bool BaseSocket::recvMsg_noExcept(string &message) {
 	int nRet;
 	unsigned Msg_size = 0;
 	unsigned offset = 0;
@@ -299,7 +328,9 @@ bool Connection::recvMessage(string &message) {
 		nRet = recv(mySocket, (char*)&Msg_size + offset,                                        
 					sizeof(unsigned) - offset, 0);                                           
 		if (nRet == INVALID_SOCKET || nRet == 0) {
-			throw ConnectionException(WSA_ERROR, TRACEBACK);
+			this->socketError(WSA_ERROR, __FUNCTION__);
+			return false;
+			//throw SocketException(WSA_ERROR, __FUNCTION__);
 		}
 		else {
 			offset += nRet;
@@ -327,7 +358,9 @@ bool Connection::recvMessage(string &message) {
 		while (offset < Msg_size) {
 			nRet = recv(mySocket, reception + offset, Msg_size - offset, 0);
 			if (nRet == INVALID_SOCKET || nRet == 0) {
-				throw ConnectionException(WSA_ERROR, TRACEBACK);
+				this->socketError(WSA_ERROR, __FUNCTION__);
+				return false;
+				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
 				offset += nRet;
@@ -338,5 +371,26 @@ bool Connection::recvMessage(string &message) {
 	}
 
 	return true;
+}
+
+void BaseSocket::sendMsg_noExcept(const std::string & message)
+{
+	if (!this->sendMsg_noExcept_noExcept(message)) {
+		throw SocketException(this->socket_err, TRACEBACK);
+	}
+}
+
+void BaseSocket::recvMsg(std::string & message)
+{
+	if (!this->recvMsg_noExcept(message)) {
+		throw SocketException(this->socket_err, TRACEBACK);
+	}
+}
+
+std::string BaseSocket::recvMsg()
+{
+	string message = "";
+	this->recvMsg(message);
+	return message;
 }
 
