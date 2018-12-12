@@ -15,9 +15,10 @@ public:
 		return *this;
 	}
 
-	bool bindSocket(const std::string& server_addr, unsigned cPort, unsigned queue_size=5);
+	
+	int bind(const std::string& server_addr, unsigned cPort, unsigned queue_size=5);
 
-	Socket acceptSocket();
+	Socket accept();
 
 
 };

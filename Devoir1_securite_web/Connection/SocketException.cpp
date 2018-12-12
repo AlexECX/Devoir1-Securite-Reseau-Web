@@ -14,9 +14,8 @@ SocketException::SocketException(const string & msg) :
 SocketException::SocketException(const string& msg, const char *file, int line, string f) :
 	std::runtime_error(msg) {
 	stream_Msg = "Traceback:";
-	stream_Msg += "\n  File \"" + string(file) + "\", line " + to_string(line) + " in " + f 
-				+": SocketException";
-	stream_Msg += "\n" + msg;
+	stream_Msg += "\n  File \"" + string(file) + "\", line " + to_string(line) + " in " + f;
+	stream_Msg += "\nSocketException: " + msg;
 
 }
 

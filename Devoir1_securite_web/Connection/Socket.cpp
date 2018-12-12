@@ -23,7 +23,7 @@ Socket::~Socket()
 {
 }
 
-bool Socket::connectSocket(const string& server_addr, unsigned cPort)
+int Socket::connectSocket(const string& server_addr, unsigned cPort)
 {
 	addrInfo.sin_family = this->af;
 	addrInfo.sin_port = ::htons(cPort);
@@ -39,10 +39,11 @@ bool Socket::connectSocket(const string& server_addr, unsigned cPort)
 		}
 	}
 
-	if (::connect(mySocket, (LPSOCKADDR)&addrInfo, sizeof(struct sockaddr)) == SOCKET_ERROR) {
+	int status = ::connect(mySocket, (LPSOCKADDR)&addrInfo, sizeof(struct sockaddr));
+	if (status < 0) {
 		this->socketError(WSA_ERROR, __FUNCTION__);
-		return false;
+		return status;
 	}
 	
-	return true;
+	return status;
 }

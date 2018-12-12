@@ -57,13 +57,13 @@ void runServer(unsigned nPort)
 	{
 		ServerSocket server = ServerSocket(nPort);
 		if (!server.valid_socket()) 
-			throw SocketException(server.getSocketErr());
+			throw SocketException(server.getSocketErr(), TRACEBACK);
 		Socket clientA;
 		Socket clientB;
 
 		for (size_t i = 0; i < 2; i++)
 		{
-			Socket client = server.acceptSocket();
+			Socket client = server.accept();
 			if (!client.valid_socket())
 				throw SocketException(client.getSocketErr(), TRACEBACK);
 			cout << "\n\n\nReception en cours..." << endl;

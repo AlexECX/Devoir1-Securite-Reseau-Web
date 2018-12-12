@@ -11,12 +11,12 @@ ServerSocket::ServerSocket()
 
 ServerSocket::ServerSocket(unsigned cPort)
 {
-	bindSocket("", cPort);
+	bind("", cPort);
 }
 
 ServerSocket::ServerSocket(const string& server_addr, unsigned cPort)
 {
-	bindSocket(server_addr, cPort);
+	bind(server_addr, cPort);
 }
 
 
@@ -24,38 +24,43 @@ ServerSocket::~ServerSocket()
 {
 }
 
-bool ServerSocket::bindSocket(const string& server_addr, unsigned cPort, unsigned queue_size)
+int ServerSocket::bind(const string& server_addr, unsigned cPort, unsigned queue_size)
 {
 	addrInfo.sin_family = this->af;
+
 	if (server_addr != "") {
 		addrInfo.sin_addr.s_addr = ::inet_addr(server_addr.c_str());
+		if (addrInfo.sin_addr.s_addr == INADDR_NONE) {
+			LPHOSTENT lpHostEntry = ::gethostbyname(server_addr.c_str());
+			if (lpHostEntry == NULL) {
+				throw SocketException(server_addr + " invalid parameter", TRACEBACK);
+			}
+			else {
+				addrInfo.sin_addr = *((LPIN_ADDR)*lpHostEntry->h_addr_list);
+			}
+		}
 	}
 	else {
-		addrInfo.sin_addr.s_addr = INADDR_ANY;   // Indicates that connections can come from any local interface (IP address)
-											 // (by the way,  INADDR_ANY is actually "0x00000000")
-											 // ************ if you wish to specify a specific local interface (IP address) :
-											 //              =>     addrInfo.sin_addr.s_addr = ::inet_addr( "127.0.0.1" );
-	}
+		addrInfo.sin_addr.s_addr = INADDR_ANY;   }
 	
 	addrInfo.sin_port = ::htons(cPort);        // Use port from command line
 
-											 //
-											 // bind the name to the socket
-											 //
-	if (::bind(mySocket, (LPSOCKADDR)&addrInfo, sizeof(struct sockaddr)) == SOCKET_ERROR) {
+	int status = ::bind(mySocket, (LPSOCKADDR)&addrInfo, sizeof(struct sockaddr));
+	if (status < 0) {
 		this->socketError(WSA_ERROR, __FUNCTION__);
-		return false;
+		return status;
 	}
 
-	if (::listen(mySocket, queue_size) == SOCKET_ERROR) { // Number of connection request queue
+	status = ::listen(mySocket, queue_size);
+	if (status < 0) { // Number of connection request queue
 		this->socketError(WSA_ERROR, __FUNCTION__);
-		return false;
+		return status;
 	}
 	
-	return true;
+	return status;
 }
 
-Socket ServerSocket::acceptSocket()
+Socket ServerSocket::accept()
 {
 	//
 // Wait for an incoming request

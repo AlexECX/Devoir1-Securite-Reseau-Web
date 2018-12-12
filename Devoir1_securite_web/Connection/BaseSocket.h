@@ -44,23 +44,23 @@ public:
 
 	std::string getSocketErr();
 
-	bool shutdownSocket(int how);
+	int shutdown(int how);
 
 	void close();
 
 	bool valid_socket() { return mySocket > 0; }
 
-	bool sendFile(std::string FilePath);
+	int sendFile(std::string FilePath);
 
-	bool recvFile(std::string FilePath);
+	int recvFile(std::string FilePath);
 
 	//permet d'envoyer un fichier. Si trop grand,
 	//l'envoie en plusieurs paquets.
-	bool sendMsg_noExcept(const std::string &message);
+	int sendMsg_noExcept(const std::string &message);
 
 	//permet de recevoir un fichier. Si trop grand,
 	//est pret a recevoir en plusieurs paquets.
-	bool recvMsg_noExcept(std::string &message);
+	int recvMsg_noExcept(std::string &message);
 
 	void sendMsg(const std::string &message);
 

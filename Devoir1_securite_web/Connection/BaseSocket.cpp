@@ -74,20 +74,20 @@ connectionInfo BaseSocket::getIPinfo()
 {
 	int tmp = sizeof(addrInfo);
 	::getpeername(mySocket, (sockaddr *)&addrInfo, &tmp);
-	connectionInfo name;
-	name.IP = ::inet_ntoa(addrInfo.sin_addr);
-	name.Port = to_string(::ntohs(addrInfo.sin_port));
-	return name;
+	connectionInfo info;
+	info.IP = ::inet_ntoa(addrInfo.sin_addr);
+	info.Port = to_string(::ntohs(addrInfo.sin_port));
+	return info;
 }
 
 connectionInfo BaseSocket::getIPinfoLocal()
 {
 	int tmp = sizeof(addrInfo);
 	getsockname(mySocket, (sockaddr *)&addrInfo, &tmp);
-	connectionInfo name;
-	name.IP = ::inet_ntoa(addrInfo.sin_addr);
-	name.Port = to_string(::ntohs(addrInfo.sin_port));
-	return name;
+	connectionInfo info;
+	info.IP = ::inet_ntoa(addrInfo.sin_addr);
+	info.Port = to_string(::ntohs(addrInfo.sin_port));
+	return info;
 }
 
 std::string BaseSocket::getSocketErr()
@@ -95,13 +95,14 @@ std::string BaseSocket::getSocketErr()
 	return this->socket_err.substr(this->socket_err.find(" ") + 1);
 }
 
-bool BaseSocket::shutdownSocket(int how)
+int BaseSocket::shutdown(int how)
 {
-	if (::shutdown(this->mySocket, how) == SOCKET_ERROR) {
+	int status = ::shutdown(this->mySocket, how);
+	if (status < 0) {
 		this->socketError(WSA_ERROR, __FUNCTION__);
-		return false;
+		return status;
 	}
-	return true;
+	return status;
 }
 
 void BaseSocket::close()
@@ -109,7 +110,7 @@ void BaseSocket::close()
 	::closesocket(mySocket);
 }
 
-bool BaseSocket::sendFile(string FilePath) {
+int BaseSocket::sendFile(string FilePath) {
 	int nRet;
 	unsigned offset = 0;
 	unsigned File_size = 0;
@@ -122,9 +123,9 @@ bool BaseSocket::sendFile(string FilePath) {
 		while (offset < sizeof(unsigned)) {
 			nRet = ::send(mySocket, (char*)&File_size + offset, 
 						sizeof(unsigned), 0);
-			if (nRet == SOCKET_ERROR) {
+			if (nRet < 0) {
 				this->socketError(WSA_ERROR, __FUNCTION__);
-				return false;
+				return nRet;
 				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
@@ -145,9 +146,9 @@ bool BaseSocket::sendFile(string FilePath) {
 		while (offset < sizeof(unsigned)) {
 			nRet = ::send(mySocket, (char*)&File_size + offset,
 						sizeof(unsigned) - offset, 0);
-			if (nRet == SOCKET_ERROR) {
+			if (nRet < 0) {
 				this->socketError(WSA_ERROR, __FUNCTION__);
-				return false;
+				return nRet;
 				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
@@ -178,7 +179,8 @@ bool BaseSocket::sendFile(string FilePath) {
 			File_source.seekg(SentBytes, std::ios::beg);
 			File_source.read(File_buffer.get(), Msg_size);
 
-			if (sendMsg_noExcept(string(File_buffer.get(), Msg_size))) {
+			nRet = sendMsg_noExcept(string(File_buffer.get(), Msg_size));
+			if (nRet > 0) {
 				SentBytes += Msg_size;
 			}
 
@@ -196,12 +198,12 @@ bool BaseSocket::sendFile(string FilePath) {
 		}
 		File_source.close();
 
-		return true;
+		return nRet;
 	}
 	
 }
 
-bool BaseSocket::recvFile(std::string FilePath) {
+int BaseSocket::recvFile(std::string FilePath) {
 	string FileContent;
 	int nRet;
 	unsigned File_size;
@@ -210,9 +212,9 @@ bool BaseSocket::recvFile(std::string FilePath) {
 	while (offset < sizeof(unsigned)) {
 		nRet = ::recv(mySocket, (char*)&File_size + offset,
 					sizeof(unsigned) - offset, 0);
-		if (nRet == INVALID_SOCKET || nRet == 0) {
+		if (nRet <= 0) {
 			this->socketError(WSA_ERROR, __FUNCTION__);
-			return false;
+			return nRet;
 			//throw SocketException(WSA_ERROR, __FUNCTION__);
 		}
 		else {
@@ -221,14 +223,14 @@ bool BaseSocket::recvFile(std::string FilePath) {
 	}
 
 	if (File_size == 0) {
-	cout << "\nfailed to fetch " << FilePath;
-	return 0;
+		this->socketError("RemoteFileNotFound", __FUNCTION__);
+		return -2;
 		}
 
 	ofstream IMG_dest(FilePath.c_str(), ios::binary);
 	if (IMG_dest.fail()) {
-		cout << "\nfailed to open " << FilePath << " for writing";
-		return 0;
+		this->socketError("CannotOpenFile", __FUNCTION__);
+		return -2;
 	}
 
 	// Send file in multiple pakcets
@@ -251,7 +253,7 @@ bool BaseSocket::recvFile(std::string FilePath) {
 			Msg_size = File_size - RecvBytes;
 		}
 
-		if (recvMsg_noExcept(FileContent)) {
+		if (recvMsg_noExcept(FileContent) > 0) {
 			// Write to local files
 			IMG_dest.write(FileContent.c_str(), FileContent.size());
 			RecvBytes += Msg_size;
@@ -271,10 +273,10 @@ bool BaseSocket::recvFile(std::string FilePath) {
 	}
 	IMG_dest.close();
 
-	return true;
+	return 1;
 }
 
-bool BaseSocket::sendMsg_noExcept(const string &message) {
+int BaseSocket::sendMsg_noExcept(const string &message) {
 	int nRet = 0;
 	unsigned file_size = message.size();
 	const char* send_file = message.c_str();
@@ -283,9 +285,9 @@ bool BaseSocket::sendMsg_noExcept(const string &message) {
 	while (offset < sizeof(unsigned)) {
 		nRet = ::send(mySocket, (char*)&file_size + offset, 
 					sizeof(unsigned) - offset, 0);
-		if (nRet == SOCKET_ERROR) {
+		if (nRet < 0) {
 			this->socketError(WSA_ERROR, __FUNCTION__);
-			return false;
+			return nRet;
 			//throw SocketException(WSA_ERROR, __FUNCTION__);
 		}
 		else {
@@ -307,9 +309,9 @@ bool BaseSocket::sendMsg_noExcept(const string &message) {
 		offset = 0;
 		while (offset < Msg_size) {
 			nRet = ::send(mySocket, send_file + SentBytes + offset, Msg_size - offset, 0);
-			if (nRet == SOCKET_ERROR) {
+			if (nRet < 0) {
 				this->socketError(WSA_ERROR, __FUNCTION__);
-				return false;
+				return nRet;
 				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
@@ -319,10 +321,10 @@ bool BaseSocket::sendMsg_noExcept(const string &message) {
 		SentBytes += Msg_size;
 	}
 
-	return true;
+	return nRet;
 }
 
-bool BaseSocket::recvMsg_noExcept(string &message) {
+int BaseSocket::recvMsg_noExcept(string &message) {
 	int nRet;
 	unsigned Msg_size = 0;
 	unsigned offset = 0;
@@ -332,9 +334,9 @@ bool BaseSocket::recvMsg_noExcept(string &message) {
 	while (offset < sizeof(unsigned)) {
 		nRet = ::recv(mySocket, (char*)&Msg_size + offset,                                        
 					sizeof(unsigned) - offset, 0);                                           
-		if (nRet == INVALID_SOCKET || nRet == 0) {
+		if (nRet <= 0) {
 			this->socketError(WSA_ERROR, __FUNCTION__);
-			return false;
+			return nRet;
 			//throw SocketException(WSA_ERROR, __FUNCTION__);
 		}
 		else {
@@ -362,9 +364,9 @@ bool BaseSocket::recvMsg_noExcept(string &message) {
 		offset = 0;
 		while (offset < Msg_size) {
 			nRet = ::recv(mySocket, reception + offset, Msg_size - offset, 0);
-			if (nRet == INVALID_SOCKET || nRet == 0) {
+			if (nRet <= 0) {
 				this->socketError(WSA_ERROR, __FUNCTION__);
-				return false;
+				return nRet;
 				//throw SocketException(WSA_ERROR, __FUNCTION__);
 			}
 			else {
@@ -375,19 +377,19 @@ bool BaseSocket::recvMsg_noExcept(string &message) {
 		ReceivedBytes += Msg_size;
 	}
 
-	return true;
+	return nRet;
 }
 
 void BaseSocket::sendMsg(const std::string & message)
 {
-	if (!this->sendMsg_noExcept(message)) {
+	if (this->sendMsg_noExcept(message) < 0) {
 		throw SocketException(this->socket_err, TRACEBACK);
 	}
 }
 
 void BaseSocket::recvMsg(std::string & message)
 {
-	if (!this->recvMsg_noExcept(message)) {
+	if (this->recvMsg_noExcept(message) <= 0) {
 		throw SocketException(this->socket_err, TRACEBACK);
 	}
 }

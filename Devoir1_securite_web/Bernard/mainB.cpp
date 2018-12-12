@@ -171,7 +171,7 @@ void scriptedConvoTest(Socket client) {
 	try
 	{
 		ServerSocket server = ServerSocket(agnesse_IP.c_str(), (short)stoi(agnesse_port));
-		Socket clientAgnesse = server.acceptSocket();
+		Socket clientAgnesse = server.accept();
 
 		runConversationAgnesseBernard(clientAgnesse, session_key, session_mac_key);
 	}

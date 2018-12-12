@@ -14,6 +14,6 @@ public:
 		return *this;
 	}
 
-	bool connectSocket(const std::string& server_addr, unsigned cPort);
+	int connectSocket(const std::string& server_addr, unsigned cPort);
 };
 
